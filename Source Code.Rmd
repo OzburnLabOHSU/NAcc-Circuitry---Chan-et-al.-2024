@@ -47,6 +47,7 @@ library(RColorBrewer)
 library(igraph)
 library(ggraph)
 library(tidygraph)
+library(svglite)
 ```
 
 # Load Data
@@ -66,571 +67,261 @@ View(Region_Info)
 
 # Load Functions
 ```{r}
-source("PCA_Plotting_Functions.R") #Function for data distribution visualization and PCA
+source("PCA_Plotting_Functions_AC.R") #Function for data distribution visualization and PCA
 source("diffWiring.R") #Function for differential wiring analysis
 ```
 
-#c-Fos
+# Lists of Regions in parts of addiction cycle
+```{r}
+#Koob & Volkow 2010 
+
+#Binge/Intoxication
+binge <- c("left Nucleus accumbens", "right Nucleus accumbens", 
+           "left Ventral tegmental area", "right Ventral tegmental area", 
+           "left Substantia nigra, compact part", "right Substantia nigra, compact part", 
+           "left Globus pallidus, external segment", "right Globus pallidus, external segment", 
+           "left Globus pallidus, internal segment", "right Globus pallidus, internal segment", 
+           "left Ventral anterior-lateral complex of the thalamus", 
+           "right Ventral anterior-lateral complex of the thalamus", 
+           "left Ventral medial nucleus of the thalamus", "right Ventral medial nucleus of the thalamus", 
+           "left Ventral posterior complex of the thalamus", "right Ventral posterior complex of the thalamus", 
+           "left Subparafascicular nucleus", "right Subparafascicular nucleus", 
+           "left Subparafascicular area", "right Subparafascicular area", 
+           "left Peripeduncular nucleus", "right Peripeduncular nucleus", 
+           "left Medial geniculate complex", "right Medial geniculate complex", 
+           "left Dorsal part of the lateral geniculate complex", 
+           "right Dorsal part of the lateral geniculate complex", 
+           "left Lateral posterior nucleus of the thalamus", "right Lateral posterior nucleus of the thalamus", 
+           "left Posterior complex of the thalamus", "right Posterior complex of the thalamus", 
+           "left Posterior limiting nucleus of the thalamus", "right Posterior limiting nucleus of the thalamus", 
+           "left Suprageniculate nucleus", "right Suprageniculate nucleus", 
+           "left Anteroventral nucleus of thalamus", "right Anteroventral nucleus of thalamus", 
+           "left Anteromedial nucleus", "right Anteromedial nucleus", 
+           "left Anterodorsal nucleus", "right Anterodorsal nucleus", 
+           "left Interanteromedial nucleus of the thalamus", "right Interanteromedial nucleus of the thalamus", 
+           "left Interanterodorsal nucleus of the thalamus", "right Interanterodorsal nucleus of the thalamus", 
+           "left Lateral dorsal nucleus of thalamus", "right Lateral dorsal nucleus of thalamus",
+           "left Medial group of the dorsal thalamus", "right Medial group of the dorsal thalamus",
+           "left Paraventricular nucleus of the thalamus", "right Paraventricular nucleus of the thalamus", 
+           "left Parataenial nucleus", "right Parataenial nucleus", 
+           "left Nucleus of reuniens", "right Nucleus of reuniens", 
+           "left Rhomboid nucleus", "right Rhomboid nucleus", 
+           "left Central medial nucleus of the thalamus", "right Central medial nucleus of the thalamus", 
+           "left Paracentral nucleus", "right Paracentral nucleus", 
+           "left Central lateral nucleus of the thalamus", "right Central lateral nucleus of the thalamus", 
+           "left Parafascicular nucleus", "right Parafascicular nucleus", 
+           "left Reticular nucleus of the thalamus", "right Reticular nucleus of the thalamus", 
+           "left Intergeniculate leaflet of the lateral geniculate complex", 
+           "right Intergeniculate leaflet of the lateral geniculate complex", 
+           "left Ventral part of the lateral geniculate complex", 
+           "right Ventral part of the lateral geniculate complex", 
+           "left Subgeniculate nucleus", "right Subgeniculate nucleus", 
+           "left Medial habenula", "right Medial habenula", 
+           "left Lateral habenula", "right Lateral habenula")
+
+#Withdrawal/Negative affect
+withdrawal <- c("left Nucleus accumbens", "right Nucleus accumbens", 
+                "left Central amygdalar nucleus", "right Central amygdalar nucleus", 
+                "left Bed nuclei of the stria terminalis", "right Bed nuclei of the stria terminalis",
+                "left Lateral hypothalamic area", "right Lateral hypothalamic area", 
+                "left Lateral preoptic area", "right Lateral preoptic area", 
+                "left Preparasubthalamic nucleus", "right Preparasubthalamic nucleus", 
+                "left Parasubthalamic nucleus", "right Parasubthalamic nucleus", 
+                "left Retrochiasmatic area", "right Retrochiasmatic area", 
+                "left Subthalamic nucleus", "right Subthalamic nucleus", 
+                "left Tuberal nucleus", "right Tuberal nucleus", 
+                "left Zona incerta", "right Zona incerta")
+
+#Preoccupation/Anticipation/Craving
+craving <- c("left Basolateral amygdalar nucleus", "right Basolateral amygdalar nucleus", 
+             "left Agranular insular area, dorsal part", "right Agranular insular area, dorsal part", 
+             "left Agranular insular area, posterior part", "right Agranular insular area, posterior part", 
+             "left Agranular insular area, ventral part", "right Agranular insular area, ventral part", 
+             "left Field CA1", "right Field CA1", 
+             "left Field CA2", "right Field CA2", 
+             "left Field CA3", "right Field CA3", 
+             "left Dentate gyrus", "right Dentate gyrus", 
+             "left Fasciola cinerea", "right Fasciola cinerea", 
+             "left Induseum griseum", "right Induseum griseum", 
+             "left Orbital area, lateral part", "right Orbital area, lateral part", 
+             "left Orbital area, medial part", "right Orbital area, medial part", 
+             "left Orbital area, ventrolateral part", "right Orbital area, ventrolateral part", 
+             "left Anterior cingulate area, dorsal part", "right Anterior cingulate area, dorsal part", 
+             "left Anterior cingulate area, ventral part", "right Anterior cingulate area, ventral part", 
+             "left Prelimbic area", "right Prelimbic area", 
+             "left Infralimbic area", "right Infralimbic area")
+```
+
+
+# GFP Analysis
+## Load Data
+```{r}
+#Load and clean up GFP
+gfp2 <- read.csv("data/DDS 397 GFP cell detection_redux_nowhite.csv") #Reduced GFP cell counts for all mice
+View(gfp2)
+```
+
 ## Clean-Up Data
 ```{r}
 rownames(Mouse_Info) <- Mouse_Info$name
 Mouse_Info <- Mouse_Info %>% mutate(Fluid = str_replace(Fluid, "0", "O"))
 
-Mouse_Info$Old_name %in% 	colnames(cFos_density_redux)
-colnames(cFos_density_redux) <- str_replace(colnames(cFos_density_redux),"H20","H2O") #Change typo in H2O
+gfp_sqrt <- gfp2 %>% mutate(across(where(is.numeric), sqrt))
+gfp_sqrt <- gfp_sqrt %>% column_to_rownames(var="name") #changes region labels to row name
+View(gfp_sqrt)
 
-cFos_density_redux <- cFos_density_redux %>% column_to_rownames(var="name") #Changes region labels to row name
+Mouse_Info <- Mouse_Info %>% mutate(
+  gfp_name = paste0("X", name )) #clean-up to make names consistent 
+View(Mouse_Info)
 
-#Mouse names are consistent but not in the same order
-Mouse_Info$Old_name %in% colnames(cFos_density_redux) 
-
-#Match returns the position of entries of the first vector in the second. This will give us the order of columns in the cFos data to match ordering in the Mouse_Info
-reorder_columns <- match(Mouse_Info$Old_name, colnames(cFos_density_redux))
-cFos_density_redux <- cFos_density_redux[, reorder_columns]
+reorder_columns <- match(Mouse_Info$gfp_name, colnames(gfp_sqrt))
+gfp_sqrt <- gfp_sqrt[, reorder_columns]
 
 #Now things are in the same order
-Mouse_Info$Old_name == colnames(cFos_density_redux)
+Mouse_Info$gfp_name == colnames(gfp_sqrt)
 
-colnames(cFos_density_redux) <- Mouse_Info$name #Changes to shortened name that matches Mouse_Info dataframe
-Mouse_Info$name %in% colnames(cFos_density_redux) #Check if names are consistent between dataframes
-View(cFos_density_redux)
+colnames(gfp_sqrt) <- Mouse_Info$name 
+
+#Make list of only mice with bilateral NAc viral expression
+Info_Bilateral <- Mouse_Info %>% filter(Viral_Placement=="Bilateral") %>% pull(name)
+Info_Bilateral <- Info_Bilateral %>% as.character(Info_Bilateral)
+Bilateral_sqrt <- gfp_sqrt %>% select(all_of(Info_Bilateral))
+
+# Files to export as supplemental tables S21 & S22
+gfp2 <- gfp2 %>% column_to_rownames(var="name")
+gfp2 <- gfp2[, reorder_columns]
+colnames(gfp2) <- Mouse_Info$Info_Name
+
+Info_Bilateral2 <- Mouse_Info %>% filter(Viral_Placement=="Bilateral") %>% pull(Info_Name)
+Info_Bilateral2 <- Info_Bilateral2 %>% as.character(Info_Bilateral2)
+gfp_density_raw <- gfp2 %>% select(all_of(Info_Bilateral2))
+View(gfp_density_raw)
+# write.csv(gfp_density_raw,"/Users/chanamy/Documents/Ozburn Lab/DDS 397 c-Fos circuitry/paper drafts//gfp_density_raw.csv") 
+
+gfp_density_sqrt <- gfp_density_raw %>% mutate(across(where(is.numeric), sqrt))
+View(gfp_density_sqrt)
+# write.csv(gfp_density_sqrt,"/Users/chanamy/Documents/Ozburn Lab/DDS 397 c-Fos circuitry/paper drafts//gfp_density_sqrt.csv") 
 ```
 
-### Supplemental Figure 1A & B - Data Distribution
+## Supplemental Figure 2H&I - Is GFP density different between sex and fluid groups?
 ```{r}
-#Distribution of untransformed data
-stats_Fx <- plot_stats(cFos_density_redux%>% as.data.frame, 
-                      Mouse_Info%>% as.data.frame, 
-                      "Fluid", 
-                      ylab="Total c-Fos cell density (millions)", 
-                      titleL = "Raw Count by Fluid") 
-stats_Fx$plot #Splits data by fluid group
+View(Bilateral_sqrt)
+View(Bi_Info)
 
+tmp <- as.data.frame(t(Bilateral_sqrt))
 
-#Distribution of square root transformed data
-stats_Fx_sq <- plot_stats(cFos_density_redux%>% as.data.frame %>% mutate(across(where(is.numeric), sqrt)), 
-                         Mouse_Info%>% as.data.frame, 
-                         "Fluid",
-                         ylab="Total c-Fos cell density (millions)", 
-                         titleL = "Sqrt Count by Fluid")
-stats_Fx_sq$plot
-```
+tmp2 <- data.frame(tmp$`left Nucleus accumbens`,
+                   tmp$`right Nucleus accumbens`,
+                   Bi_Info$SxFluid,
+                   Bi_Info$Sex,
+                   Bi_Info$Fluid)
+View(tmp2)
 
-## Data transformation for all later analyses
-```{r}
-cFos_397_redux_SQRT <- cFos_density_redux %>% mutate(across(where(is.numeric), sqrt))
-View(cFos_397_redux_SQRT)  
-```
+tmp2 <- tmp2 %>% mutate(total_NAc = tmp..left.Nucleus.accumbens.+tmp..right.Nucleus.accumbens.) #Total NAc is sum of NAc GFP in the left and right hemisphere 
 
-### Supplemental Figure 1C 
-Is c-Fos density different between sex and fluid groups?
-```{r}
-tmp <- t(cFos_397_redux_SQRT) #Mice are rows, regions are columns
-tmp <- as.data.frame(tmp) %>% mutate(cFos_Sum = rowSums(tmp), #Calculate total c-Fos density for each mouse
-  SxFluid = Mouse_Info$SxFluid)
-View(tmp)
-
-rstatix::anova_test(cFos_Sum ~ SxFluid, 
-                    data = tmp, 
+rstatix::anova_test(total_NAc ~ Bi_Info.SxFluid, 
+                    data = tmp2, 
                     type = 3)
+#Total NAc GFP density does not differ between sex and fluid groups 
 
-ggbetweenstats(data = tmp, 
-               x="SxFluid", 
-               y="cFos_Sum", 
-               title = "c-Fos by Sex and Fluid group",
-               ylab ="Sum of c-Fos density (cells/mm3)",
+rstatix::anova_test(tmp..left.Nucleus.accumbens. ~ Bi_Info.SxFluid, 
+                    data = tmp2, 
+                    type = 3)
+#Left NAc GFP density does not differ between sex and fluid groups 
+
+rstatix::anova_test(tmp..right.Nucleus.accumbens. ~ Bi_Info.SxFluid, 
+                    data = tmp2, 
+                    type = 3)
+#Right NAc GFP density does not differ between sex and fluid groups
+
+#Supplemental Figure 2H
+GFP_sxfluid <- ggbetweenstats(data = tmp2, 
+               x="Bi_Info.SxFluid", 
+               y="total_NAc", 
+               title = "GFP by Sex and Fluid group",
+               ylab ="NAc GFP density (cells/mm3)",
                xlab = "Sex+Fluid Groups",
                results.subtitle = FALSE,
                outlier.tagging = TRUE,
+               outlier.coef = 1.5,
                outlier.label = name) + 
-    ggplot2::scale_y_continuous(
-    limits = c(0, 30000), 
-    breaks = seq(from = 0, to = 30000, by = 10000)) +
-  ggplot2::scale_color_manual(values = c("#C87A8A", "#9189C7","#909646", "#00A396"))
-```
+  ggplot2::scale_color_manual(values = c("#C87A8A", "#9189C7","#909646", "#00A396")) +
+  ggplot2::scale_y_continuous(
+    limits = c(0, 110), 
+    breaks = seq(from = 0, to = 100, by = 20))
 
-### Supplemental Figure 1D
-Is c-Fos density different between hemispheres
-```{r}
-test2 <- cFos_397_redux_SQRT %>%
-	group_by(Region_Info$Hemisphere) %>%
-	summarize(across(everything(), list(mean = mean, sum = sum)))
-View(test2) #Mean and Sum of c-Fos expression for each hemisphere for each mouse
+GFP_sxfluid
 
-test3 <- pivot_longer(ungroup(test2), 2:123, 
-                      names_to = c("sample","operation"), 
-                      names_sep = "_",
-                      values_to = "value")
-View(test3)
+ggsave("GFP_sxfluid.svg", 
+       width = 8, 
+       height = 6, 
+       units = "in")
 
-test3 %>% group_by(test3$`Region_Info$Hemisphere`) %>% 
-  filter(operation == "sum") %>% 
-  summarise(sum(value)) 
+# Is variance different between sex and fluid groups?
+lapply(split(tmp2, tmp2$Bi_Info.Sex), function(x) {bartlett.test(total_NAc ~ Bi_Info.Fluid, data = x)})
+#Neither Male or Female ethanol and water significantly different variances
 
-ggbetweenstats(test3 %>% filter(operation == "sum"), 
-               x=`Region_Info$Hemisphere`, 
-               y=value, 
-               ylab = "Sum of c-Fos density (cells/mm3)",
-               xlab = "Hemisphere",
-               title = "Total c-Fos density by Hemisphere") + 
-    ggplot2::scale_y_continuous(
-    limits = c(0, 15000), 
-    breaks = seq(from = 0, to = 15000, by = 5000))
-```
+lapply(split(tmp2, tmp2$Bi_Info.Fluid), function(x) {bartlett.test(total_NAc ~ Bi_Info.Sex, data = x)}) #Water and ethanol groups are not significantly different from each other (between sexes)
 
-## Split data by Sex and Fluid groups
-```{r}
-#All Water Drinkers
-Info_W <- Mouse_Info %>% filter(Fluid =="H2O") %>% pull(name)
-Info_W <- Info_W %>% as.character(Info_W)
-W <- cFos_397_redux_SQRT %>% select(all_of(Info_W)) #Selects water drinkers from the data set
-View(W)
-
-#All Ethanol Drinkers
-Info_E <- Mouse_Info %>% filter(Fluid=="EtOH") %>% pull(name)
-Info_E <- Info_E %>% as.character()
-E <- cFos_397_redux_SQRT %>% select(all_of(Info_E)) #Selects ethanol drinkers from the data set
-View(E)
-
-#All Females
-Info_F <- Mouse_Info %>% filter(Sex=="F") %>% pull(name)
-Info_F <- Info_F %>% as.character(Info_F)
-F_all <- cFos_397_redux_SQRT %>% select(all_of(Info_F)) #selects females from the data set
-
-#All Males
-Info_M <- Mouse_Info %>% filter(Sex=="M") %>% pull(name)
-Info_M <- Info_M %>% as.character()
-M_all <- cFos_397_redux_SQRT %>% select(all_of(Info_M))
-
-#Female Ethanol
-Info_FEt <- Mouse_Info %>% filter(Sex=="F" , Fluid=="EtOH") %>% pull(name)
-Info_FEt <- Info_FEt %>% as.character(Info_FEt)
-FEt <- cFos_397_redux_SQRT %>% select(all_of(Info_FEt)) #selects female ethanol drinkers from the data set
-
-#Female Water
-Info_FWa <- Mouse_Info %>% filter(Sex=="F" , Fluid=="H2O") %>% pull(name)
-Info_FWa <- Info_FWa %>% as.character()
-FWa <- cFos_397_redux_SQRT %>% select(all_of(Info_FWa))
-
-#Male Ethanol
-Info_MEt <- Mouse_Info %>% filter(Sex=="M" , Fluid=="EtOH") %>% pull(name)
-Info_MEt <- Info_MEt %>% as.character(Info_MEt)
-MEt <- cFos_397_redux_SQRT %>% select(all_of(Info_MEt)) #selects male ethanol drinkers from the data set
-
-#Male Water
-Info_MWa <- Mouse_Info %>% filter(Sex=="M" , Fluid=="H2O") %>% pull(name)
-Info_MWa <- Info_MWa %>% as.character(Info_MWa)
-MWa <- cFos_397_redux_SQRT %>% select(all_of(Info_MWa)) 
-```
-
-## Figure 2A, Hierarchical Clustering
-Is c-Fos expression profile different between sex and fluid groups?
-```{r}
-#Calculate average c-Fos density per region for sex and fluid subgroups
-Avg_cFos_SxFluid <- data.frame(row.names = Region_Info$name,
-                      F_EtOH = rowMeans(FEt),
-                      F_H2O = rowMeans(FWa), 
-                      M_H2O = rowMeans(MWa),
-                      M_EtOH = rowMeans(MEt))
-View(Avg_cFos_SxFluid)
-max(Avg_cFos_SxFluid)
-
-col_fun = colorRamp2(c(0, 25, 50, 75, 103), c("white", "yellow", "orange", "red", "darkred"))
-
-Heatmap(as.matrix(Avg_cFos_SxFluid), 
-        show_row_names = FALSE, 
-        show_column_names = TRUE, 
-        column_title = "Sex & Fluid Groups", 
-        row_title = "Regions", 
-        col = col_fun, 
-        column_dend_height = unit(1, "cm"), 
-        heatmap_legend_param = list(title = "sqrt(c-Fos density)",
-                                    title_position = "leftcenter-rot"), 
-        column_names_rot = 0, 
-        row_dend_width = unit(15, "mm"))
-```
-
-## Figure 2B & C, Supplemental Table 2 
-Principal Components Analysis (PCA)
-```{r}
-plottingData_PCA_sqrt_redux <- plot_PCA(cFos_397_redux_SQRT,
-                                  Mouse_Info,
-                                  c("Sex", "Fluid", "Cohort", "SxFluid"),
-                                  nPC = 10, 
-                                  plot=FALSE) 
-View(plottingData_PCA_sqrt_redux$anova)  #Shows PCs, associated variance, and calculated 1-way ANOVA p-values for each factor's association with each PC
-
-#2-way ANOVA to determine interaction between sex,fluid, and top 10 PCs
-tmp <- subset(plottingData_PCA_sqrt_redux$plottingData, select = -c(11, 14,15)) #PCs+ Sex and Fluid info
-View(tmp)
-
-tmp2 <- subset(plottingData_PCA_sqrt_redux$plottingData, select = -c(11:15)) #Just PCs
-View(tmp2)
-
-PCA_anova <- colnames(tmp2) %>%
-  lapply(function(x) { data.frame(
-    rstatix::anova_test(as.formula(paste(x," ~ Sex*Fluid")),
-                        data = tmp,
-                        type = 3))}) 
-
-names(PCA_anova) <- colnames(tmp2)
-PCA_anova <- bind_rows(PCA_anova, .id = "tmp2")
-
-PCA_anova <- PCA_anova %>% select(tmp2, p, Effect) %>% pivot_wider(names_from= Effect, 
-                                     values_from = p) #just p-values between each PC and trait
-
-#Color Schemes for each variable:
-  #Sex:  female -"#F48FB1", male -"darkorange" 
-plottingData_PCA_sqrt_redux_sex <- plot_PCA(cFos_397_redux_SQRT,
-                                  Mouse_Info,
-                                  "Sex",
-                                  nPC = 10, 
-                                  plot=FALSE)
-plottingData_PCA_sqrt_redux_sex$summary_plot
-
-#Fluid: ethanol -"#008000" water - "blue"
-plottingData_PCA_sqrt_redux_fluid <- plot_PCA(cFos_397_redux_SQRT,
-                                  Mouse_Info,
-                                  "Fluid",
-                                  nPC = 10, 
-                                  plot=FALSE) 
-plottingData_PCA_sqrt_redux_fluid$summary_plot
-```
-
-## Figure 2D, Supplemental Table S3 
-Compare c-Fos differential expression between water drinking mice 
-```{r}
-MWa #Male water drinkers
-FWa #Female water drinkers 
-
-pval_water <- double(nrow(MWa)) 
-for(n in 1:nrow(MWa)) {pval_water[n] <- t.test(x = MWa[n, ], y = FWa[n, ])$p.val} #calculated p-value comparing male and female water groups c-Fos density
-
-MAplotData_397_water <- data.frame(lfc = log2(rowMeans(FWa)+1) - log2(rowMeans(MWa)+1),
-                           pval = -log10(pval_water),
-                           region = rownames(cFos_397_redux_SQRT)) #Add 1 to log expressions to prevent infinities
-View(MAplotData_397_water) #Dataframe comparing c-Fos expression between male and female water drinking mice
-
-#Volcano plot colored by p-val
-MAplotData_397_water1 <- MAplotData_397_water %>% mutate(hsig = if_else(abs(pval) > 1.3, 2 , 0),
-	dir = sign(lfc),
-	color = hsig*dir,
-	color = factor(color))
-View(MAplotData_397_water1) #color value assigned to regions with -log(pval)>1.3
-
-ggscatter(MAplotData_397_water1, x="lfc", y="pval", color="color", 
-          title = "Water Male vs. Female", 
-          xlab = "log fold change", 
-          ylab = "-log10(p-value)",
-  palette = c("blue","gray","red")) +
-  geom_hline(yintercept=1.3, linetype = "dashed") + 
-  geom_vline(xintercept = 0) +
-  xlim(-1.0, 1.15) + 
-  ylim(0, 5)
-
-#Regions with p.val >1.3 and lfc >0 (higher expression in female water mice)
-vtest <- data.frame(region = MAplotData_397_water1 %>%
-	filter(color == 2) %>%
-	pull(region), 
-	pval = MAplotData_397_water1 %>%
-	filter(color == 2) %>%
-	pull(pval),
-  lfc = MAplotData_397_water1 %>%
-	filter(color == 2) %>%
-	pull(lfc)) 
-view(vtest)
-
-#Regions with p.val >1.3 and lfc <0 (higher expression in male water mice)
-v1test <- data.frame(region = MAplotData_397_water1 %>%
-	filter(color == -2) %>%
-	pull(region), 
-	pval = MAplotData_397_water1 %>%
-	filter(color == -2) %>%
-	pull(pval),
-  lfc = MAplotData_397_water1 %>%
-	filter(color == -2) %>%
-	pull(lfc)) 
-view(v1test)
-```
-
-## Figure 2E, Supplemental Table S3
-Compare c-Fos differential expression between ethanol drinking mice
-```{r}
-MEt #Male ethanol drinkers
-FEt #Female ethanol drinkers
-
-pval_ethanol <- double(nrow(MEt)) 
-for(n in 1:nrow(MEt)) {pval_ethanol[n] <- t.test(x = MEt[n, ], y = FEt[n, ])$p.val} #calculated p-value comparing male water and ethanol groups
-
-MAplotData_397_ethanol <- data.frame(lfc = log2(rowMeans(FEt)+1) - log2(rowMeans(MEt)+1),
-                           pval = -log10(pval_ethanol),
-                           region = rownames(cFos_397_redux_SQRT)) #Add 1 to log expressions to prevent infinities
-View(MAplotData_397_ethanol) #Dataframe comparing c-Fos expression between male and female ethanol drinking mice
- 
-#Volcano plot colored by p-val and lfc
-MAplotData_397_ethanol1 <- MAplotData_397_ethanol %>% mutate(hsig = if_else(abs(pval) > 1.3, 2, 0),
-	dir = sign(pval),
-	color = hsig*dir,
-	color = factor(color))
-View(MAplotData_397_ethanol1) #color value assigned to regions with -log(pval)>1.3
-
-ggscatter(MAplotData_397_ethanol1, x="lfc", y="pval", color="color", 
-          title = "Ethanol Male vs. Female", 
-          xlab = "log fold change", 
-          ylab = "-log10(p-value)",
-  palette = c("gray","red")) +
-  geom_hline(yintercept=1.3, linetype = "dashed") + 
-  geom_vline(xintercept = 0) +
-  xlim(-1.0, 1.15) + 
-  ylim(0, 5)
-
-#Regions with p.val >1.3 and lfc >0 (higher expression in female ethanol mice)
-diff_cFos <- data.frame(region = MAplotData_397_ethanol1 %>%
-	filter(color == 2) %>%
-	pull(region), 
-	pval = MAplotData_397_ethanol1 %>%
-	filter(color == 2) %>%
-	pull(pval),
-  lfc = MAplotData_397_ethanol1 %>%
-	filter(color == 2) %>%
-	pull(lfc)) 
-View(diff_cFos)
-
-# Anatomical category of regions with differential c-Fos expression 
-rownames(MAplotData_397_ethanol1) %in% Region_Info$name
-tmp <- MAplotData_397_ethanol1 %>% mutate(Anat_Cat = Region_Info$Allen_Group_Name, 
-                                                              Hemisphere = Region_Info$Hemisphere)
-View(tmp)
-
-temp <- tmp %>% filter(tmp$region %in% diff_cFos$region)
-View(temp)  
-
-temp %>%
-        group_by(Anat_Cat) %>%
-        tally()
-
-# Hemisphere of regions with differential c-Fos expression 
-temp %>%
-        group_by(Hemisphere) %>%
-        tally()
-
-left <- 40
-right <- 89
-test = data.frame(left,right)
+test <- split(tmp2, tmp2$Bi_Info.SxFluid)
 View(test)
-print(chisq.test(test)) 
-```
+test_1 <- full_join(test$FxEtOH, test$MxH2O)
+View(test_1)
+bartlett.test(total_NAc ~ Bi_Info.Sex, data = test_1) #Female ethanol not different than male water
 
-### Supplemental Figure S3A, Supplemental Table S3
-Ethanol vs Water (sex collapsed)
-```{r}
-E #All Ethanol drinkers
-W #All Water drinkers 
+test_2 <- full_join(test$MxEtOH, test$FxH2O) 
+View(test_2)
+bartlett.test(total_NAc ~ Bi_Info.Sex, data = test_2) #Male ethanol not different than female water
 
-pval_all <- double(nrow(W)) 
-for(n in 1:nrow(W)) {pval_all[n] <- t.test(x = W[n, ], y = E[n, ])$p.val} #calculated p-value comparing each region between water and ethanol groups 
+#Are there group differences in total GFP expression?
+tmp3 <- as.data.frame(tmp) %>% mutate(GFP_Sum = rowSums(tmp), #Calculate total c-Fos density for each mouse
+  SxFluid = Bi_Info$SxFluid, 
+  Sex = Bi_Info$Sex, 
+  Fluid = Bi_Info$Fluid)
+View(tmp3)
 
-MAplotData_397 <- data.frame(lfc = log2(rowMeans(E)+1) - log2(rowMeans(W)+1),
-                          pval = -log10(pval_all),
-                          region = rownames(cFos_397_redux_SQRT)) #Add 1 to log expressions to prevent infinities
-view(MAplotData_397) #Dataframe comparing c-Fos expression between ethanol and water drinkers with log fold change (lfc), average expression, -log(p-val), and region names
+rstatix::anova_test(GFP_Sum ~ SxFluid, 
+                    data = tmp3, 
+                    type = 3) #No effect of sex or fluid on total brain GFP expression
 
-#Plot colored by p-val and direction of lfc
-MAplotData_397_1 <- MAplotData_397 %>% mutate(hsig = if_else(abs(pval) > 1.3, 2 , 0),
-	dir = sign(lfc),
-	color = hsig*dir,
-	color = factor(color))
-view(MAplotData_397_1) #color value assigned to regions with -log(pval)>1.3
+#Supplemental Figure 2I
+GFP_sxfluid2 <- ggbetweenstats(data = tmp3, 
+               x="SxFluid", 
+               y="GFP_Sum", 
+               title = "Total GFP by Sex and Fluid group",
+               ylab ="Total GFP density (cells/mm3)",
+               xlab = "Sex+Fluid Groups",
+               results.subtitle = FALSE,
+               outlier.tagging = TRUE,
+               outlier.coef = 1.5,
+               outlier.label = name) + 
+  ggplot2::scale_color_manual(values = c("#C87A8A", "#9189C7","#909646", "#00A396")) +
+    ggplot2::scale_y_continuous(
+    limits = c(0, 16000), 
+    breaks = seq(from = 0, to = 15000, by = 1500))
 
-ggscatter(MAplotData_397_1, x="lfc", y="pval", color="color", 
-          title = "Ethanol vs. Water", 
-          xlab = "log fold change", 
-          ylab = "-log10(p-value)",
-  palette = c("blue","gray","red")) +
-  geom_hline(yintercept=1.3, linetype = "dashed") + 
-  geom_vline(xintercept = 0) +
-  xlim(-1.0, 1.15) +
-  ylim(0, 5) 
+GFP_sxfluid2
 
-#Regions with p.val >1.3 and lfc >0 (higher expression in ethanol drinking mice)
-ztest <- data.frame(region = MAplotData_397_1 %>%
-	filter(color == 2 ) %>%
-	pull(region), 
-	pval = MAplotData_397_1 %>%
-	filter(color == 2 ) %>%
-	pull(pval),
-  lfc = MAplotData_397_1 %>%
-	filter(color == 2 ) %>%
-	pull(lfc)) 
-view(ztest)
+ggsave("GFP_sxfluid2.svg", 
+       width = 8, 
+       height = 6, 
+       units = "in")
 
-#Regions with p.val >1.3 and lfc <0 (higher expression in water drinking mice)
-z1test <- data.frame(region = MAplotData_397_1 %>%
-	filter(color == -2 ) %>%
-	pull(region), 
-	pval = MAplotData_397_1 %>%
-	filter(color == -2 ) %>%
-	pull(pval),
-  lfc = MAplotData_397_1 %>%
-	filter(color == -2 ) %>%
-	pull(lfc)) 
-view(z1test)
-```
+# Is variance different between sex and fluid groups?
+lapply(split(tmp3, tmp3$Sex), function(x) {bartlett.test(GFP_Sum ~ Fluid, data = x)})
+#Neither Male or Female ethanol and water significantly different variances
 
-### Supplemental Figure S3B, Supplemental Table S3
-Male vs Female (fluid collapsed)
-```{r}
-F_all #All Females
-M_all #All Males
+lapply(split(tmp3, tmp3$Fluid), function(x) {bartlett.test(GFP_Sum ~ Sex, data = x)}) #Water and ethanol groups are not significantly different from each other (between sexes)
 
-pval_sex <- double(nrow(F_all)) 
-for(n in 1:nrow(F_all)) {pval_sex[n] <- t.test(x = F_all[n, ], y = M_all[n, ])$p.val} #calculated p-value comparing all rows in female and male groups, which are stored in 2 separate data frames.
+test <- split(tmp3, tmp3$SxFluid)
+View(test)
+test_1 <- full_join(test$F_EtOH, test$M_H2O)
+View(test_1)
+bartlett.test(GFP_Sum ~ Sex, data = test_1) #Female ethanol not different than male water
 
-MAplotData_397_sex <- data.frame( lfc = log2(rowMeans(F_all)+1) - log2(rowMeans(M_all)+1),
-                          pval = -log10(pval_sex),
-                          region = rownames(cFos_397_redux_SQRT)) #Add 1 to log expressions to prevent infinities
-view(MAplotData_397_sex) #Dataframe comparing c-Fos expression between male and females
-
-#Plot colored by p-val and direction of lfc
-MAplotData_397_sex1 <- MAplotData_397_sex %>% mutate(hsig = if_else(abs(pval) > 1.3, 2 , 0),
-	dir = sign(pval),
-	color = hsig*dir,
-	color = factor(color))
-view(MAplotData_397_sex1) #color value assigned to regions with -log(pval)>1.3
-
-ggscatter(MAplotData_397_sex1, x="lfc", y="pval", color="color", 
-          title = "Females vs. Males", 
-          xlab = "log fold change", 
-          ylab = "-log10(p-value)",
-  palette = c("gray","red")) +
-  geom_hline(yintercept=1.3, linetype = "dashed") + 
-  geom_vline(xintercept = 0) +
-  xlim(-1.0, 1.15) + 
-  ylim(0, 5)
-
-#Regions with p.val >1.3 and lfc >0 (higher expression in female mice)
-ytest <- data.frame(region = MAplotData_397_sex1 %>%
-	filter(color == 2 ) %>%
-	pull(region), 
-	pval = MAplotData_397_sex1 %>%
-	filter(color == 2 ) %>%
-	pull(pval),
-  lfc = MAplotData_397_sex1 %>%
-	filter(color == 2 ) %>%
-	pull(lfc)) 
-view(ytest)
-```
-
-### Supplemental Figure S3C, Supplemental Table S3
-Female Ethanol vs Water
-```{r}
-FEt #Female ethanol 
-FWa #Female water
-
-pval_F <- double(nrow(FWa)) 
-for(n in 1:nrow(FWa)) {pval_F[n] <- t.test(x = FWa[n, ], y = FEt[n, ])$p.val} #calculated p-value comparing female water and ethanol groups, which are stored in 2 separate data frames. 
-
-MAplotData_397_F <- data.frame( lfc = log2(rowMeans(FEt)+1) - log2(rowMeans(FWa)+1),
-                          pval = -log10(pval_F),
-                          region = rownames(cFos_397_redux_SQRT)) #Add 1 to log expressions to prevent infinities
-View(MAplotData_397_F) #Dataframe comparing c-Fos expression between female ethanol and water drinking mice
-
-#Plot colored by p-val and direction of lfc
-MAplotData_397_F1 <- MAplotData_397_F %>% mutate(hsig = if_else(abs(pval) > 1.3, 2 , 0),
-	dir = sign(lfc),
-	color = hsig*dir,
-	color = factor(color))
-View(MAplotData_397_F1) #color value assigned to regions with -log(pval)>1.3
-
-ggscatter(MAplotData_397_F1, x="lfc", y="pval", color="color", 
-          title = "Female Ethanol vs. Water", 
-          xlab = "log fold change", 
-          ylab = "-log10(p-value)",
-  palette = c("blue","gray","red")) +
-  geom_hline(yintercept=1.3, linetype = "dashed") + 
-  geom_vline(xintercept = 0) +
-  xlim(-1.0, 1.15) + 
-  ylim(0, 5)
-
-#Regions with p.val >1.3 and lfc >0 (higher expression in female ethanol mice)
-xtest <- data.frame(region = MAplotData_397_F1 %>%
-	filter(color == 2 ) %>%
-	pull(region), 
-	pval = MAplotData_397_F1 %>%
-	filter(color == 2 ) %>%
-	pull(pval),
-  lfc = MAplotData_397_F1 %>%
-	filter(color == 2 ) %>%
-	pull(lfc)) 
-View(xtest)
-
-#Regions with p.val >1.3 and lfc <0 (higher expression in female water mice)
-x1test <- data.frame(region = MAplotData_397_F1 %>%
-	filter(color == -2 ) %>%
-	pull(region), 
-	pval = MAplotData_397_F1 %>%
-	filter(color == -2 ) %>%
-	pull(pval),
-  lfc = MAplotData_397_F1 %>%
-	filter(color == -2 ) %>%
-	pull(lfc)) 
-View(x1test)
-```
-
-### Supplemental Figure S3D, Supplemental Table S3
-Male Ethanol vs Water
-```{r}
-MEt #Male Ethanol
-MWa #Male Water
-
-pval_M <- double(nrow(MWa)) 
-for(n in 1:nrow(MWa)) {pval_M[n] <- t.test(x = MWa[n, ], y = MEt[n, ])$p.val} #calculated p-value comparing male water and ethanol groups
-
-MAplotData_397_M <- data.frame(lfc = log2(rowMeans(MEt)+1) - log2(rowMeans(MWa)+1),
-                               pval = -log10(pval_M),
-                               region = rownames(cFos_397_redux_SQRT)) #Add 1 to log expressions to prevent infinities
-view(MAplotData_397_M) #Dataframe comparing c-Fos expression between male ethanol and water drinking mice
-
-#Plot colored by p-val
-MAplotData_397_M1 <- MAplotData_397_M %>% mutate(hsig = if_else(abs(pval) > 1.3, 2 , 0),
-	dir = sign(lfc),
-	color = hsig*dir,
-	color = factor(color))
-view(MAplotData_397_M1) #color value assigned to regions with -log(pval)>1.3
-
-ggscatter(MAplotData_397_M1, x="lfc", y="pval", color="color", 
-          title = "Male Ethanol vs. Water", 
-          xlab = "log fold change", 
-          ylab = "-log10(p-value)",
-  palette = c("blue", "gray","red")) +
-  geom_hline(yintercept=1.3, linetype = "dashed") + 
-  geom_vline(xintercept = 0) +
-  xlim(-1.0, 1.15) + 
-  ylim(0, 5)
-
-#Regions with p.val >1.3 and lfc >0 (higher expression in male ethanol mice)
-wtest <- data.frame(region = MAplotData_397_M1 %>%
-	filter(color == 2 ) %>%
-	pull(region), 
-	pval = MAplotData_397_M1 %>%
-	filter(color == 2) %>%
-	pull(pval),
-  lfc = MAplotData_397_M1 %>%
-	filter(color == 2) %>%
-	pull(lfc)) 
-view(wtest)
-
-#Regions with p.val >1.3 and lfc <0 (higher expression in male water mice)
-w1test <- data.frame(region = MAplotData_397_M1 %>%
-	filter(color == -2) %>%
-	pull(region), 
-	pval = MAplotData_397_M1 %>%
-	filter(color == -2) %>%
-	pull(pval),
-  lfc = MAplotData_397_M1 %>%
-	filter(color == -2) %>%
-	pull(lfc)) 
-view(w1test)
+test_2 <- full_join(test$M_EtOH, test$F_H2O) 
+View(test_2)
+bartlett.test(GFP_Sum ~ Sex, data = test_2) #Male ethanol not different than female water
 ```
 
 # c-Fos + GFP Colocalization Analysis
@@ -644,38 +335,69 @@ View(cFos_gfp)
 ##Clean-Up Data
 ```{r}
 cFos_gfp <- cFos_gfp %>% column_to_rownames(var="name")
-colnames(cFos_gfp) <- Mouse_Info$name #changes to shortened name that matches mouse-info sheet
-Mouse_Info$name %in% 	colnames(cFos_gfp)
+colnames(cFos_gfp) <- str_replace(colnames(cFos_gfp),"X","")
+
+#Mouse names are consistent but not in the same order
+Mouse_Info$Name == colnames(cFos_gfp) 
+
+#Match returns the position of entries of the first vector in the second. This will give us the order of columns in the cFos data to match ordering in the Mouse_Info
+reorder_columns <- match(Mouse_Info$name, colnames(cFos_gfp))
+cFos_gfp <- cFos_gfp[, reorder_columns]
+
+#Now things are in the same order
+Mouse_Info$name == colnames(cFos_gfp)
 View(cFos_gfp)
+
+# Files to export as supplemental tables S23 & S24
+cFos_gfp2 <- cFos_gfp 
+colnames(cFos_gfp2) <- Mouse_Info$Info_Name
+View(cFos_gfp2)
+
+cFos_gfp_density_raw <- cFos_gfp2 %>% select(all_of(Info_Bilateral2))
+View(cFos_gfp_density_raw)
+#write.csv(cFos_gfp_density_raw,"/Users/chanamy/Documents/Ozburn Lab/DDS 397 c-Fos circuitry/paper drafts//cFos_gfp_density_raw.csv") 
+
+cFos_gfp_density_sqrt <- cFos_gfp_density_raw %>% mutate(across(where(is.numeric), sqrt))
+View(cFos_gfp_density_sqrt)
+#write.csv(cFos_gfp_density_sqrt,"/Users/chanamy/Documents/Ozburn Lab/DDS 397 c-Fos circuitry/paper drafts//cFos_gfp_density_sqrt.csv")
 ```
 
 ## Split Data by viral placement
 ```{r}
-Info_Bilateral <- Mouse_Info %>% filter(Viral_Placement=="Bilateral") %>% pull(name)
-Info_Bilateral <- Info_Bilateral %>% as.character(Info_Bilateral)
 Bilateral <- cFos_gfp %>% select(all_of(Info_Bilateral))
 
 Bi_Info <- Mouse_Info %>% filter(Viral_Placement=="Bilateral")
 rownames(Bi_Info) <- Bi_Info$name
+View(Bi_Info)
 ```
 
-### Supplemental Figure S6A & B
+### Supplemental Figure S63A & B
 ```{r}
 #Untransformed Data
 stats_Bi <- plot_stats(Bilateral%>% as.data.frame, 
                        Bi_Info %>% as.data.frame,
                        "Fluid",
-                      ylab="Total cFos+GFP cell density (millions)", 
+                      ylab="Total cFos+GFP cell density (million cells/mm^3)", 
                       titleL = "Raw Count by Fluid") 
 stats_Bi$plot
+
+ggsave("cFos_gfp_raw_dist.svg", 
+       width = 8, 
+       height = 6, 
+       units = "in")
 
 #Square root Transformed
 stats_Bi_sq <- plot_stats(Bilateral%>% as.data.frame %>% mutate(across(where(is.numeric), sqrt)), 
                          Bi_Info %>% as.data.frame, 
                          "Fluid",
-                         ylab="Total cFos+GFP cell density (millions)", 
+                         ylab="Total cFos+GFP cell density (million cells/mm^3)", 
                          titleL = "Sqrt Count by Fluid")
 stats_Bi_sq$plot
+
+ggsave("cFos_gfp_sqrt_dist.svg", 
+       width = 8, 
+       height = 6, 
+       units = "in")
 ```
 
 ## Data transformation for all later analyses
@@ -684,20 +406,20 @@ Bilateral_sqrt <- Bilateral %>% mutate(across(where(is.numeric), sqrt))
 View(Bilateral_sqrt)  
 ```
 
-### Supplemental Figure 6C
+### Supplemental Figure S3C
 Is c-Fos+GFP colocalization different between sex and fluid groups?
 ```{r}
 tmp <- t(Bilateral_sqrt)
 tmp <- as.data.frame(tmp) %>% mutate(Avg = rowMeans(tmp),
-                                       total = rowSums(tmp),
-                                       SxFluid = Bi_Info$SxFluid)
+                                     total = rowSums(tmp),
+                                     SxFluid = Bi_Info$SxFluid)
 View(tmp)
 
 rstatix::anova_test(total ~ SxFluid, 
                     data = tmp, 
-                    type = 3)
+                    type = 3) #total c-Fos+GFP colocalization is not different between sex and fluid groups
 
-ggbetweenstats(data = tmp, 
+cFos_gfp_tmp <- ggbetweenstats(data = tmp, 
                x="SxFluid", 
                y="total", 
                title = "Total cFos+GFP by SxFluid group",
@@ -709,75 +431,86 @@ ggbetweenstats(data = tmp,
     limits = c(0, 4000), 
     breaks = seq(from = 0, to = 4000, by = 1000)) +
     ggplot2::scale_color_manual(values = c("#C87A8A", "#9189C7","#909646", "#00A396"))
+
+cFos_gfp_tmp
+
+ggsave("cFos_gfp_sxfluid.svg", 
+       width = 8, 
+       height = 6, 
+       units = "in")
 ```
 
-### Supplemental Figure 6D
+### Supplemental Figure S3D
 Is c-Fos+GFP colocalization different between hemispheres?
 ```{r}
 cfos_gfp_Bi <- Bilateral_sqrt %>%
 	group_by(Region_Info$Hemisphere) %>%
 	summarize(across(everything(), list(mean = mean, sum = sum)))
-view(cfos_gfp_Bi)
+View(cfos_gfp_Bi)
 
-cfos_gfp_Bi <- pivot_longer(ungroup(cfos_gfp_Bi), 2:83, names_to = c("sample","operation"), names_sep = "_",values_to = "value") #Change numbers of columns when you have the final data set
-view(cfos_gfp_Bi)
+cfos_gfp_Bi <- pivot_longer(ungroup(cfos_gfp_Bi), 2:83, 
+                            names_to = c("sample","operation"), 
+                            names_sep = "_",
+                            values_to = "value") #Change numbers of columns when you have the final data set
+View(cfos_gfp_Bi)
 
-cfos_gfp_Bi %>% group_by(cfos_gfp_Bi$`Region_Info$Hemisphere`) %>% filter(operation == "sum") %>% summarise(sum(value)) 
+cfos_gfp_Bi %>% group_by(cfos_gfp_Bi$`Region_Info$Hemisphere`) %>% 
+  filter(operation == "sum") %>% 
+  summarise(sum(value)) 
 
-ggbetweenstats(cfos_gfp_Bi %>% filter(operation == "sum"), 
+cFos_gfp_hemi <- ggbetweenstats(cfos_gfp_Bi %>% filter(operation == "sum"), 
                x=`Region_Info$Hemisphere`, 
                y=value, 
                xlab = "Hemisphere",
-               ylab ="Sum of c-Fos+GFP density (cells/mm3)",
+               ylab ="c-Fos+GFP colocalization (cells/mm^3)",
                results.subtitle = FALSE,
                title = "Bilateral c-Fos+GFP")
+
+ggsave("cFos_gfp_hemi.svg", 
+       width = 8, 
+       height = 6, 
+       units = "in")
 ```
 
-### Supplemental Figure 6E & F, Supplemental Table S4 - Principal Components Analysis (PCA)
+### Supplemental Figure S3E, Supplemental Table S2 - Principal Components Analysis (PCA)
 ```{r}
 plottingData_PCA_Bisqrt <- plot_PCA(Bilateral_sqrt,
                                   Bi_Info,
-                                  c("Sex", "Fluid", "Cohort", "SxFluid"),
+                                  c("Sex", "Fluid"),
                                   nPC = 10, 
                                   plot=FALSE) 
 View(plottingData_PCA_Bisqrt$anova)
 
-#Use 2-way ANOVA to determine interaction between sex,fluid, and top 10 PCs
-tmp <- subset(plottingData_PCA_Bisqrt$plottingData, select = -c(11, 14,15)) #PCs+ Sex and Fluid info
-View(tmp)
+tmp_gfp_PCA <- plottingData_PCA_Bisqrt$heatmap
+tmp_gfp_PCA
 
-tmp2 <- subset(plottingData_PCA_Bisqrt$plottingData, select = -c(11:15)) #Just PCs
-View(tmp2)
+svglite::svglite("cFos_GFP_PCA_heatmap.svg",
+                width = 7,
+                height = 5)
+draw(tmp_gfp_PCA)
+dev.off()
 
-PCA_anova <- colnames(tmp2) %>%
-  lapply(function(x) { data.frame(
-    rstatix::anova_test(as.formula(paste(x," ~ Sex*Fluid")),
-                        data = tmp,
-                        type = 3))}) 
+ggsave("cFos_GFP_PCA_heatmap.svg",
+       width = 10, 
+       height = 9, 
+       units = "in")
 
-names(PCA_anova) <- colnames(tmp2)
-View(PCA_anova)
-PCA_anova <- bind_rows(PCA_anova, .id = "tmp2")
-
-PCA_anova <- PCA_anova %>% select(tmp2, p, Effect) %>% pivot_wider(names_from= Effect, 
-                                     values_from = p) #just p-values between each PC and trait
-
-#Color Schemes for each variable:
-  #Sex:  female -"#F48FB1", male -"darkorange" 
-plottingData_PCA_Bisqrt_sex <- plot_PCA(Bilateral_sqrt,
-                                  Bi_Info,
-                                  c("Sex"),
-                                  nPC = 10, 
-                                  plot=FALSE) 
-plottingData_PCA_Bisqrt_sex$summary_plot
-
-#Fluid: ethanol -"#008000" water - "blue"
-plottingData_PCA_Bisqrt_fluid <- plot_PCA(Bilateral_sqrt,
-                                  Bi_Info,
-                                  c("Fluid"),
-                                  nPC = 10, 
-                                  plot=FALSE) 
-plottingData_PCA_Bisqrt_fluid$summary_plot
+# #Color Schemes for each variable:
+#   #Sex:  female -"#F48FB1", male -"darkorange" 
+# plottingData_PCA_Bisqrt_sex <- plot_PCA(Bilateral_sqrt,
+#                                   Bi_Info,
+#                                   c("Sex"),
+#                                   nPC = 10, 
+#                                   plot=FALSE) 
+# plottingData_PCA_Bisqrt_sex$summary_plot
+# 
+# #Fluid: ethanol -"#008000" water - "blue"
+# plottingData_PCA_Bisqrt_fluid <- plot_PCA(Bilateral_sqrt,
+#                                   Bi_Info,
+#                                   c("Fluid"),
+#                                   nPC = 10, 
+#                                   plot=FALSE) 
+# plottingData_PCA_Bisqrt_fluid$summary_plot
 ```
 
 ## Split data by Sex and Fluid groups
@@ -786,13 +519,11 @@ plottingData_PCA_Bisqrt_fluid$summary_plot
 Info_W <- Bi_Info %>% filter(Fluid =="H2O") %>% pull(name)
 Info_W <- Info_W %>% as.character(Info_W)
 W <- Bilateral_sqrt %>% select(all_of(Info_W)) #Selects water drinkers from the data set
-View(W)
 
 #All Ethanol Drinkers
 Info_E <- Bi_Info %>% filter(Fluid =="EtOH") %>% pull(name)
 Info_E <- Info_E %>% as.character(Info_E)
 E <- Bilateral_sqrt %>% select(all_of(Info_E)) #Selects ethanol drinkers from the data set
-View(E)
 
 #All Females
 Info_F <- Bi_Info %>% filter(Sex =="F") %>% pull(name)
@@ -825,7 +556,76 @@ Info_MWa <- Info_MWa %>% as.character(Info_MWa)
 MWa <- Bilateral_sqrt %>% select(all_of(Info_MWa)) 
 ```
 
-## Figure 2F, Supplemental Table S5 - c-Fos+GFP differential expression (water)
+## Figure 2A, Supplemental Table S3 - differential expression
+Ethanol vs Water (sex collapsed)
+```{r}
+#Ethanol vs Water (sex collapsed)
+W #All Water drinkers
+E #All Ethanol drinkers
+
+pval_all <- double(nrow(W)) 
+for(n in 1:nrow(W)) {pval_all[n] <- t.test(x = W[n, ], y = E[n, ])$p.val} #calculated p-value comparing all water and ethanol groups, which are stored in 2 separate data frames. 
+View(pval_all)
+
+VP_Bi_Fos_GFP <- data.frame(lfc = log2(rowMeans(E)+1) - log2(rowMeans(W)+1),
+                          pval = -log10(pval_all),
+                          region = rownames(Bilateral_sqrt)) #Add 1 to log expressions to prevent infinities
+View(VP_Bi_Fos_GFP)
+
+#Plot colored by p-val and direction of lfc
+VP_Bi_Fos_GFP <- VP_Bi_Fos_GFP %>% mutate(hsig = if_else(abs(pval) > 1.3, 2 , 0),
+	dir = sign(lfc),
+	color = hsig*dir,
+	color = factor(color))
+view(VP_Bi_Fos_GFP) #color value assigned to regions with -log(pval)>1.3
+
+tmp_scatter9 <- ggscatter(VP_Bi_Fos_GFP, 
+                          x="lfc", 
+                          y="pval", 
+                          color="color", 
+          title = "c-Fos+GFP - Ethanol vs. Water", 
+          xlab = "log fold change", 
+          ylab = "-log10(p-value)",
+  palette = c("blue","gray","red")) +
+  geom_hline(yintercept=1.3, linetype = "dashed") + 
+  geom_vline(xintercept = 0) + 
+  scale_x_continuous(limits = c(-4,4),
+                    breaks = seq(-4,4,1)) +
+  ylim(0, 3)
+
+tmp_scatter9
+
+ggsave("VP_cfos_gfp_EtOHvH2O.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+
+#Regions with p.val >1.3 and lfc >0 (higher expression in ethanol drinking mice)
+ztest <- data.frame(region = VP_Bi_Fos_GFP %>%
+	filter(color == 2 ) %>%
+	pull(region), 
+	pval = VP_Bi_Fos_GFP %>%
+	filter(color == 2 ) %>%
+	pull(pval),
+  lfc = VP_Bi_Fos_GFP %>%
+	filter(color == 2 ) %>%
+	pull(lfc)) 
+view(ztest)
+
+#Regions with p.val >1.3 and lfc <0 (higher expression in water drinking mice)
+z1test <- data.frame(region = VP_Bi_Fos_GFP %>%
+	filter(color == -2 ) %>%
+	pull(region), 
+	pval = VP_Bi_Fos_GFP %>%
+	filter(color == -2 ) %>%
+	pull(pval),
+  lfc = VP_Bi_Fos_GFP %>%
+	filter(color == -2 ) %>%
+	pull(lfc)) 
+view(z1test)
+```
+
+## Figure 2B, Supplemental Table S3 - c-Fos+GFP differential expression (water)
 ```{r}
 MWa #Male water drinkers
 FWa #Female water drinkers
@@ -845,7 +645,10 @@ VP_Bi_Fos_GFP_water <- VP_Bi_Fos_GFP_water %>% mutate(hsig = if_else(abs(pval) >
 	color = factor(color))
 View(VP_Bi_Fos_GFP_water) #color value assigned to regions with -log(pval)>1.3
 
-ggscatter(VP_Bi_Fos_GFP_water, x="lfc", y="pval", color="color", 
+tmp_scatter7 <- ggscatter(VP_Bi_Fos_GFP_water, 
+                          x="lfc", 
+                          y="pval", 
+                          color="color", 
           title = "c-Fos+GFP - Water Male vs. Female", 
           xlab = "log fold change", 
           ylab = "-log10(p-value)",
@@ -856,8 +659,15 @@ ggscatter(VP_Bi_Fos_GFP_water, x="lfc", y="pval", color="color",
                     breaks = seq(-4,4,1)) +
   ylim(0, 3)
 
+tmp_scatter7
+
+ggsave("VP_cfos_gfp_H2O_MvF.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+
 #How many regions are < or > 1.5 log-fold change?
-#Regions with p.val >1.3 and lfc >0 (higher expression in female ethanol mice)
+#Regions with p.val >1.3 and lfc >0 (higher expression in female water mice)
 vtest <- data.frame(region = VP_Bi_Fos_GFP_water %>%
 	filter(color == 2) %>%
 	pull(region), 
@@ -869,7 +679,7 @@ vtest <- data.frame(region = VP_Bi_Fos_GFP_water %>%
 	pull(lfc)) 
 View(vtest)
 
-#Regions with p.val >1.3 and lfc <0 (higher expression in female water mice)
+#Regions with p.val >1.3 and lfc <0 (higher expression in male water mice)
 v1test <- data.frame(region = VP_Bi_Fos_GFP_water %>%
 	filter(color == -2) %>%
 	pull(region), 
@@ -882,7 +692,7 @@ v1test <- data.frame(region = VP_Bi_Fos_GFP_water %>%
 View(v1test)
 ```
 
-## Figure 2G, Supplemental Table S5 - c-Fos+GFP differential expression (ethanol)
+## Figure 2C, Supplemental Table S3 - c-Fos+GFP differential expression (ethanol)
 ```{r}
 MEt #Male ethanol drinkers
 FEt #Female ethanol drinkers
@@ -893,16 +703,19 @@ for(n in 1:nrow(MEt)) {pval_ethanol[n] <- t.test(x = MEt[n, ], y = FEt[n, ])$p.v
 VP_Bi_Fos_GFP_ethanol <- data.frame(lfc = log2(rowMeans(FEt)+1) - log2(rowMeans(MEt)+1),
                                     pval = -log10(pval_ethanol),
                                     region = rownames(Bilateral_sqrt)) #Add 1 to log expressions to prevent infinities
-view(VP_Bi_Fos_GFP_ethanol)
+View(VP_Bi_Fos_GFP_ethanol)
 
 #Plot colored by p-val and direction of lfc
 VP_Bi_Fos_GFP_ethanol <- VP_Bi_Fos_GFP_ethanol %>% mutate(hsig = if_else(abs(pval) > 1.3, 2 , 0),
 	dir = sign(lfc),
 	color = hsig*dir,
 	color = factor(color))
-view(VP_Bi_Fos_GFP_ethanol) #color value assigned to regions with -log(pval)>1.3
+View(VP_Bi_Fos_GFP_ethanol) #color value assigned to regions with -log(pval)>1.3
 
-ggscatter(VP_Bi_Fos_GFP_ethanol, x="lfc", y="pval", color="color", 
+tmp_scatter8 <- ggscatter(VP_Bi_Fos_GFP_ethanol, 
+                          x="lfc", 
+                          y="pval", 
+                          color="color", 
           title = "c-Fos+ GFP - Ethanol Male vs. Female", 
           xlab = "log fold change", 
           ylab = "-log10(p-value)",
@@ -912,6 +725,13 @@ ggscatter(VP_Bi_Fos_GFP_ethanol, x="lfc", y="pval", color="color",
   scale_x_continuous(limits = c(-4,4),
                     breaks = seq(-4,4,1)) +
   ylim(0, 3)
+
+tmp_scatter8
+
+ggsave("VP_cfos_gfp_EtOH_MvF.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 
 #How many regions are < or > 1.5 log-fold change?
 #Regions with p.val >1.3 and lfc >0 (higher expression in female ethanol mice)
@@ -950,6 +770,10 @@ test = data.frame(left,right)
 View(test)
 print(chisq.test(test))
 
+cFos_GFP_binge <- intersect(diff_cFos_GFP$region, binge) #4 regions (all thalamus)
+cFos_GFP_withdrawal <- intersect(diff_cFos_GFP$region, withdrawal) #3 regions (hypothalamic and thalamic regions)
+cFos_GFP_craving <- intersect(diff_cFos_GFP$region, craving) #4 regions (all hippocampus)
+
 #Regions with p.val >1.3 and lfc <0 (higher expression in male ethanol mice)
 u1test <- data.frame(region = VP_Bi_Fos_GFP_ethanol %>%
 	filter(color == -2) %>%
@@ -963,71 +787,7 @@ u1test <- data.frame(region = VP_Bi_Fos_GFP_ethanol %>%
 View(u1test)
 ```
 
-#### Overlap with Differential c-Fos expression
-```{r}
-intersect(diff_cFos$region, diff_cFos_GFP$region)
-```
-
-### Supplemental Figure S7A, Supplemental Table S5 - differential expression
-Ethanol vs Water (sex collapsed)
-```{r}
-#Ethanol vs Water (sex collapsed)
-W #All Water drinkers
-E #All Ethanol drinkers
-
-pval_all <- double(nrow(W)) 
-for(n in 1:nrow(W)) {pval_all[n] <- t.test(x = W[n, ], y = E[n, ])$p.val} #calculated p-value comparing all water and ethanol groups, which are stored in 2 separate data frames. 
-view(pval_all)
-
-VP_Bi_Fos_GFP <- data.frame(lfc = log2(rowMeans(E)+1) - log2(rowMeans(W)+1),
-                          pval = -log10(pval_all),
-                          region = rownames(Bilateral_sqrt)) #Add 1 to log expressions to prevent infinities
-View(VP_Bi_Fos_GFP)
-
-#Plot colored by p-val and direction of lfc
-VP_Bi_Fos_GFP <- VP_Bi_Fos_GFP %>% mutate(hsig = if_else(abs(pval) > 1.3, 2 , 0),
-	dir = sign(lfc),
-	color = hsig*dir,
-	color = factor(color))
-view(VP_Bi_Fos_GFP) #color value assigned to regions with -log(pval)>1.3
-
-ggscatter(VP_Bi_Fos_GFP, x="lfc", y="pval", color="color", 
-          title = "c-Fos+GFP - Ethanol vs. Water", 
-          xlab = "log fold change", 
-          ylab = "-log10(p-value)",
-  palette = c("blue","gray","red")) +
-  geom_hline(yintercept=1.3, linetype = "dashed") + 
-  geom_vline(xintercept = 0) + 
-  scale_x_continuous(limits = c(-4,4),
-                    breaks = seq(-4,4,1)) +
-  ylim(0, 3)
-
-#Regions with p.val >1.3 and lfc >0 (higher expression in ethanol drinking mice)
-ztest <- data.frame(region = VP_Bi_Fos_GFP %>%
-	filter(color == 2 ) %>%
-	pull(region), 
-	pval = VP_Bi_Fos_GFP %>%
-	filter(color == 2 ) %>%
-	pull(pval),
-  lfc = VP_Bi_Fos_GFP %>%
-	filter(color == 2 ) %>%
-	pull(lfc)) 
-view(ztest)
-
-#Regions with p.val >1.3 and lfc <0 (higher expression in water drinking mice)
-z1test <- data.frame(region = VP_Bi_Fos_GFP %>%
-	filter(color == -2 ) %>%
-	pull(region), 
-	pval = VP_Bi_Fos_GFP %>%
-	filter(color == -2 ) %>%
-	pull(pval),
-  lfc = VP_Bi_Fos_GFP %>%
-	filter(color == -2 ) %>%
-	pull(lfc)) 
-view(z1test)
-```
-
-### Supplemental Figure S7B, Supplemental Table S5 - differential expression
+### Supplemental Figure S4A, Supplemental Table S3 - differential expression
 Female vs Male (fluid collapsed)
 ```{r}
 F_all #Females
@@ -1047,7 +807,10 @@ VP_Bi_Fos_GFP_sex <- VP_Bi_Fos_GFP_sex %>% mutate(hsig = if_else(abs(pval) > 1.3
 	color = factor(color))
 view(VP_Bi_Fos_GFP_sex) #color value assigned to regions with -log(pval)>1.3
 
-ggscatter(VP_Bi_Fos_GFP_sex, x="lfc", y="pval", color="color", 
+tmp_scatter10 <- ggscatter(VP_Bi_Fos_GFP_sex, 
+                           x="lfc", 
+                           y="pval", 
+                           color="color", 
           title = "c-Fos+GFP - Male vs. Female", 
           xlab = "log fold change", 
           ylab = "-log10(p-value)",
@@ -1057,6 +820,13 @@ ggscatter(VP_Bi_Fos_GFP_sex, x="lfc", y="pval", color="color",
   scale_x_continuous(limits = c(-4,4),
                     breaks = seq(-4,4,1)) +
   ylim(0, 3)
+
+tmp_scatter10
+
+ggsave("VP_cfos_gfp_MvF.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 
 #How many regions are < or > 1.5 log-fold change?
 #Regions with p.val >1.3 and lfc >0 (higher expression in female mice)
@@ -1069,7 +839,7 @@ ytest <- data.frame(region = VP_Bi_Fos_GFP_sex %>%
   lfc = VP_Bi_Fos_GFP_sex %>%
 	filter(color == 2) %>%
 	pull(lfc)) 
-view(ytest)
+View(ytest)
 
 #Regions with p.val >1.3 and lfc <0 (higher expression in male mice)
 y1test <- data.frame(region = VP_Bi_Fos_GFP_sex %>%
@@ -1081,10 +851,10 @@ y1test <- data.frame(region = VP_Bi_Fos_GFP_sex %>%
   lfc = VP_Bi_Fos_GFP_sex %>%
 	filter(color == -2) %>%
 	pull(lfc)) 
-view(y1test)
+View(y1test)
 ```
 
-### Supplemental Figure S7C, Supplemental Table S5 - differential expression
+### Supplemental Figure S4B, Supplemental Table S3 - differential expression
 Female - Ethanol vs. Water
 ```{r}
 FWa #Female water drinkers
@@ -1096,16 +866,19 @@ for(n in 1:nrow(FWa)) {pval_F[n] <- t.test(x = FWa[n, ], y = FEt[n, ])$p.val} #c
 VP_Bi_Fos_GFP_F <- data.frame( lfc = log2(rowMeans(FEt)+1) - log2(rowMeans(FWa)+1),
                           pval = -log10(pval_F),
                           region = rownames(Bilateral_sqrt)) #Add 1 to log expressions to prevent infinities
-view(VP_Bi_Fos_GFP_F)
+View(VP_Bi_Fos_GFP_F)
 
 #Plot colored by p-val and direction of lfc
 VP_Bi_Fos_GFP_F <- VP_Bi_Fos_GFP_F %>% mutate(hsig = if_else(abs(pval) > 1.3, 2 , 0),
 	dir = sign(lfc),
 	color = hsig*dir,
 	color = factor(color))
-view(VP_Bi_Fos_GFP_F) #color value assigned to regions with -log(pval)>1.3
+View(VP_Bi_Fos_GFP_F) #color value assigned to regions with -log(pval)>1.3
 
-ggscatter(VP_Bi_Fos_GFP_F, x="lfc", y="pval", color="color", 
+tmp_scatter11 <- ggscatter(VP_Bi_Fos_GFP_F, 
+                           x="lfc", 
+                           y="pval", 
+                           color="color", 
           title = "c-Fos+GFP - Female Ethanol vs. Water", 
           xlab = "log fold change", 
           ylab = "-log10(p-value)",
@@ -1115,6 +888,13 @@ ggscatter(VP_Bi_Fos_GFP_F, x="lfc", y="pval", color="color",
   scale_x_continuous(limits = c(-4,4),
                     breaks = seq(-4,4,1)) +
   ylim(0, 3)
+
+tmp_scatter11
+
+ggsave("VP_cfos_gfp_F_EtOHvH2O.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 
 #How many regions are < or > 1.5 log-fold change?
 #Regions with p.val >1.3 and lfc >0 (higher expression in female ethanol mice)
@@ -1127,7 +907,7 @@ xtest <- data.frame(region = VP_Bi_Fos_GFP_F %>%
   lfc = VP_Bi_Fos_GFP_F %>%
 	filter(color == 2) %>%
 	pull(lfc)) 
-view(xtest)
+View(xtest)
 
 #Regions with p.val >1.3 and lfc <0 (higher expression in female water mice)
 x1test <- data.frame(region = VP_Bi_Fos_GFP_F %>%
@@ -1139,10 +919,10 @@ x1test <- data.frame(region = VP_Bi_Fos_GFP_F %>%
   lfc = VP_Bi_Fos_GFP_F %>%
 	filter(color == -2) %>%
 	pull(lfc)) 
-view(x1test)
+View(x1test)
 ```
 
-### Supplemental Figure S7D, Supplemental Table S5 - differential expression
+### Supplemental Figure S4C, Supplemental Table S3 - differential expression
 Male - Ethanol vs. Water
 ```{r}
 MWa #Male water drinkers
@@ -1154,16 +934,19 @@ for(n in 1:nrow(MWa)) {pval_M[n] <- t.test(x = MWa[n, ], y = MEt[n, ])$p.val} #c
 VP_Bi_Fos_GFP_M <- data.frame(lfc = log2(rowMeans(MEt)+1) - log2(rowMeans(MWa)+1),
                             pval = -log10(pval_M),
                            region = rownames(Bilateral_sqrt)) #Add 1 to log expressions to prevent infinities
-view(VP_Bi_Fos_GFP_M)
+View(VP_Bi_Fos_GFP_M)
 
 #Plot colored by p-val and direction of lfc
 VP_Bi_Fos_GFP_M <- VP_Bi_Fos_GFP_M %>% mutate(hsig = if_else(abs(pval) > 1.3, 2 , 0),
 	dir = sign(lfc),
 	color = hsig*dir,
 	color = factor(color))
-view(VP_Bi_Fos_GFP_M) #color value assigned to regions with -log(pval)>1.3
+View(VP_Bi_Fos_GFP_M) #color value assigned to regions with -log(pval)>1.3
 
-ggscatter(VP_Bi_Fos_GFP_M, x="lfc", y="pval", color="color", 
+tmp_scatter12 <- ggscatter(VP_Bi_Fos_GFP_M, 
+                           x="lfc", 
+                           y="pval", 
+                           color="color", 
           title = "c-Fos+GFP - Male Ethanol vs. Water", 
           xlab = "log fold change", 
           ylab = "-log10(p-value)",
@@ -1173,6 +956,13 @@ ggscatter(VP_Bi_Fos_GFP_M, x="lfc", y="pval", color="color",
   scale_x_continuous(limits = c(-4,4),
                     breaks = seq(-4,4,1)) +
   ylim(0, 3)
+
+tmp_scatter12
+
+ggsave("VP_cfos_gfp_M_EtOHvH2O.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 
 #How many regions are < or > 1.5 log-fold change?
 #Regions with p.val >1.3 and lfc >0 (higher expression in female ethanol mice)
@@ -1185,7 +975,7 @@ wtest <- data.frame(region = VP_Bi_Fos_GFP_M %>%
   lfc = VP_Bi_Fos_GFP_M %>%
 	filter(color == 2) %>%
 	pull(lfc)) 
-view(wtest)
+View(wtest)
 
 #Regions with p.val >1.3 and lfc <0 (higher expression in female water mice)
 w1test <- data.frame(region = VP_Bi_Fos_GFP_M %>%
@@ -1197,13 +987,1021 @@ w1test <- data.frame(region = VP_Bi_Fos_GFP_M %>%
   lfc = VP_Bi_Fos_GFP_M %>%
 	filter(color == -2) %>%
 	pull(lfc)) 
-view(w1test)
+View(w1test)
+```
+
+### Supplemental Figure S5 - Bar Plots for regions with different c-Fos+GFP
+```{r}
+#Make ethanol and bilateral only gfp and c-Fos data frames.
+Bi_gfp_sqrt <- gfp_sqrt %>% select(all_of(Info_E))
+colnames(Bi_gfp_sqrt) <- paste(colnames(Bi_gfp_sqrt), sep = "_", "gfp")
+View(Bi_gfp_sqrt)
+
+Bi_cFos_sqrt <- cFos_397_redux_SQRT %>% select(all_of(Info_E))
+colnames(Bi_cFos_sqrt) <- paste(colnames(Bi_cFos_sqrt), sep = "_", "cFos")
+View(Bi_cFos_sqrt)
+
+E_tmp <- E 
+colnames(E_tmp) <- paste(colnames(E_tmp), sep = "_", "3")
+View(E_tmp)
+
+#Combine into 1 data frame
+All_diff_coloco <- merge(Bi_gfp_sqrt, Bi_cFos_sqrt, by="row.names", all=TRUE)
+All_diff_coloco <- All_diff_coloco %>% column_to_rownames(var="Row.names") 
+All_diff_coloco <- merge(All_diff_coloco, E_tmp, by="row.names", all=TRUE)
+View(All_diff_coloco)
+
+View(Region_Info)
+reorder_rows <- match(Region_Info$name, All_diff_coloco$Row.names)
+All_diff_coloco <- All_diff_coloco[reorder_rows, ]
+All_diff_coloco <- All_diff_coloco %>% mutate(acronym = Region_Info$acronym)
+
+#Filter only differential c-Fos+GFP regions into 1 dataframe
+View(diff_cFos_GFP)
+fm_diff_cfos_gfp <- diff_cFos_GFP %>% pull(region)
+tmp <- u1test %>% pull(region)
+fm_diff_cfos_gfp <- append(fm_diff_cfos_gfp,tmp)
+
+All_diff_coloco <- All_diff_coloco %>% filter(Row.names %in% fm_diff_cfos_gfp) 
+View(All_diff_coloco)
+
+test <- pivot_longer(All_diff_coloco, 2:73, names_to = "type", values_to = "density" )
+View(test)
+
+test <- test %>% mutate(stain = case_when(grepl("_gfp", type) ~ "gfp",
+                                           grepl("_cFos", type) ~"cFos",
+                                           grepl("_3", type) ~ "cFos_gfp"))
+
+test <- test %>% mutate(type = str_replace(type, "_gfp", ""), 
+                        type = str_replace(type, "_cFos", ""), 
+                        type = str_replace(type, "_3", ""))
+
+test <- test %>% mutate(sex = case_when(type %in% Info_FEt ~ "F",
+                                          type %in% Info_MEt ~ "M"))
+test <- test %>% mutate(sex_stain = paste0(sex, "_", stain))
+max(test$density)
+
+test <- test %>% rename("Region" ="Row.names") 
+
+test_2 <- subset(test, select = -Region)
+
+#Test plot for 1 region (Anterior amygdalar area)
+ggboxplot(test_2$`AAA-L`, 
+          x="sex_stain", 
+          y="density", 
+          color = "sex", 
+          palette=c("#C87A8A","#909646"), 
+          xlab = "", 
+          ylab = "density (cells/mm^3)", 
+          title = "Left Anterior Amygdalar Area", 
+          legend = "none")+ 
+  geom_jitter(color="black", size=0.4, alpha=0.9)+
+  ggplot2::scale_y_continuous(
+    limits = c(0, 110), 
+    breaks = seq(from = 0, to = 100, by = 20)) + 
+  theme(axis.text.x = element_text(size = 8),
+  axis.title.y = element_text(size = 8), 
+  axis.text.y = element_text(size = 8), 
+  title = element_text(size = 8)
+  )
+
+#Create a function to plot each region
+cat_chart1 <- function(data, region){
+
+  test <- data %>% 
+    filter(Region == region)
+
+  plot1 <- ggboxplot(test, 
+                     x="sex_stain", 
+                     y="density", 
+                     color = "sex", 
+                     palette=c("#C87A8A","#909646"), 
+                     title = region, 
+                     xlab = "", 
+                     ylab = "density (cells/mm^3)", 
+                     legend = "none") + 
+    geom_jitter(color="black", size=0.4, alpha=0.9) +
+    ggplot2::scale_y_continuous(
+    limits = c(0, 110), 
+    breaks = seq(from = 0, to = 100, by = 20)) + 
+  theme(axis.text.x = element_text(size = 8, angle = 90),
+  axis.title.y = element_text(size = 8), 
+  axis.text.y = element_text(size = 8), 
+  title = element_text(size = 8)
+  )
+
+  return(plot1)
+}
+
+# loop through all Categories
+plot_list <- map(unique(test$Region), ~ cat_chart1(test, .x)) 
+plot_list[[1]]
+
+plot_list1 <- plot_list[1:10] #Plots of first 10 regions
+plot_list2 <- plot_list[11:20] #Plots of regions 11-20
+plot_list3 <- plot_list[21:30] #Plots of regions 21-30
+plot_list4 <- plot_list[31:40] #Plots of last 10 regions
+
+#Supplemental Figure S5A-J
+p1 <- plot_grid(plotlist = plot_list1, ncol = 5)
+p1
+
+ggsave("barplot1.svg",
+       width = 8, 
+       height = 10, 
+       units = "in")
+
+#Supplemental Figure S5K-T
+p2 <- plot_grid(plotlist = plot_list2, ncol = 5)
+p2
+
+ggsave("barplot2.svg",
+       width = 8, 
+       height = 10, 
+       units = "in")
+
+#Supplemental Figure S5U-DD
+p3  <- plot_grid(plotlist = plot_list3, ncol = 5)
+p3
+
+ggsave("barplot3.svg",
+       width = 8, 
+       height = 10, 
+       units = "in")
+
+#Supplemental Figure S5EE-NN
+p4 <- plot_grid(plotlist = plot_list4, ncol = 5)
+p4
+
+ggsave("barplot4.svg",
+       width = 8, 
+       height = 10, 
+       units = "in")
+```
+
+#c-Fos
+## Clean-Up Data
+```{r}
+Mouse_Info$Old_name %in% 	colnames(cFos_density_redux)
+colnames(cFos_density_redux) <- str_replace(colnames(cFos_density_redux),"H20","H2O") #Change typo in H2O
+
+cFos_density_redux <- cFos_density_redux %>% column_to_rownames(var="name") #Changes region labels to row name
+
+#Mouse names are consistent but not in the same order
+Mouse_Info$Old_name %in% colnames(cFos_density_redux) 
+
+#Match returns the position of entries of the first vector in the second. This will give us the order of columns in the cFos data to match ordering in the Mouse_Info
+reorder_columns <- match(Mouse_Info$Old_name, colnames(cFos_density_redux))
+cFos_density_redux <- cFos_density_redux[, reorder_columns]
+
+#Now things are in the same order
+Mouse_Info$Old_name == colnames(cFos_density_redux)
+
+colnames(cFos_density_redux) <- Mouse_Info$name #Changes to shortened name that matches Mouse_Info dataframe
+Mouse_Info$name %in% colnames(cFos_density_redux) #Check if names are consistent between dataframes
+View(cFos_density_redux)
+
+# Files to export as supplemental tables 19&20
+cFos_density_raw <- cFos_density_redux
+colnames(cFos_density_raw) <- Mouse_Info$Info_Name
+View(cFos_density_raw)
+#write.csv(cFos_density_raw,"/Users/chanamy/Documents/Ozburn Lab/DDS 397 c-Fos circuitry/paper drafts//cFos_density_raw.csv") 
+
+cFos_density_sqrt <- cFos_density_raw %>% mutate(across(where(is.numeric), sqrt))
+View(cFos_density_sqrt)
+#write.csv(cFos_density_sqrt,"/Users/chanamy/Documents/Ozburn Lab/DDS 397 c-Fos circuitry/paper drafts//cFos_density_sqrt.csv") 
+```
+
+### Supplemental Figure S8A & B - Data Distribution
+```{r}
+#Distribution of untransformed data
+stats_Fx <- plot_stats(cFos_density_redux %>% as.data.frame, 
+                      Mouse_Info%>% as.data.frame, 
+                      "Fluid", 
+                      ylab="Total c-Fos cell density (million cells/mm^3)", 
+                      titleL = "Raw Count by Fluid") 
+A <- stats_Fx$plot #Splits data by fluid group
+
+ggsave("raw_dist.svg", 
+       plot = A, 
+       width = 8, 
+       height = 6, 
+       units = "in")
+
+#Distribution of square root transformed data
+stats_Fx_sq <- plot_stats(cFos_density_redux%>% as.data.frame %>% mutate(across(where(is.numeric), sqrt)), 
+                         Mouse_Info%>% as.data.frame, 
+                         "Fluid",
+                         ylab="Total c-Fos cell density (million cells/mm^3)", 
+                         titleL = "Sqrt Count by Fluid")
+B <- stats_Fx_sq$plot
+
+ggsave("sqrt_dist.svg", 
+       plot = B, 
+       width = 8, 
+       height = 6, 
+       units = "in")
+```
+
+## Data transformation for all later analyses
+```{r}
+cFos_397_redux_SQRT <- cFos_density_redux %>% mutate(across(where(is.numeric), sqrt))
+View(cFos_397_redux_SQRT)  
+```
+
+### Supplemental Figure S8C 
+```{r}
+tmp <- t(cFos_397_redux_SQRT) #Mice are rows, regions are columns
+
+#Is c-Fos density different between individuals?
+tmp1 <- as.data.frame(tmp) %>% mutate(SxFluid = Mouse_Info$SxFluid)
+tmp1 <- tmp1 %>% rownames_to_column(var="Mouse_ID")
+tmp1 <- tmp1 %>% pivot_longer(-c(Mouse_ID, SxFluid), 
+                              names_to = "region", 
+                              values_to = "cFos")
+
+View(tmp1)
+cFos_bxplt <- ggplot(tmp1, aes(Mouse_ID, 
+                               cFos, 
+                               fill = SxFluid)) +
+  geom_boxplot() +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+ggsave("cFos_bxplt.svg", 
+       width = 8, 
+       height = 6, 
+       units = "in")
+
+#Is c-Fos density different between sex and fluid groups?
+tmp <- as.data.frame(tmp) %>% mutate(cFos_Sum = rowSums(tmp), #Calculate total c-Fos density for each mouse
+  SxFluid = Mouse_Info$SxFluid, 
+  Sex = Mouse_Info$Sex, 
+  Fluid = Mouse_Info$Fluid)
+View(tmp)
+
+rstatix::anova_test(cFos_Sum ~ SxFluid, 
+                    data = tmp, 
+                    type = 3)
+
+cFos_sxfluid <- ggbetweenstats(data = tmp, 
+               x="SxFluid", 
+               y="cFos_Sum", 
+               title = "c-Fos by Sex and Fluid group",
+               ylab ="Sum of c-Fos density (cells/mm3)",
+               xlab = "Sex+Fluid Groups",
+               results.subtitle = FALSE,
+               outlier.tagging = TRUE,
+               outlier.coef = 1.5,
+               outlier.label = name) + 
+    ggplot2::scale_y_continuous(
+    limits = c(0, 30000), 
+    breaks = seq(from = 0, to = 30000, by = 10000)) +
+  ggplot2::scale_color_manual(values = c("#C87A8A", "#9189C7","#909646", "#00A396"))
+
+cFos_sxfluid
+
+ggsave("cFos_sxfluid.svg", 
+       width = 8, 
+       height = 6, 
+       units = "in")
+
+# Is variance different between sex and fluid groups?
+lapply(split(tmp, tmp$Sex), function(x) {bartlett.test(cFos_Sum ~ Fluid, data = x)})
+#Male ethanol and water have significantly different variances
+
+lapply(split(tmp, tmp$Fluid), function(x) {bartlett.test(cFos_Sum ~ Sex, data = x)}) #Water and ethanol grous are not significantly different from each other (between sexes)
+
+test <- split(tmp, tmp$SxFluid)
+test_1 <- full_join(test$F_EtOH, test$M_H2O)
+View(test_1)
+bartlett.test(cFos_Sum ~ Sex, data = test_1) #Female ethanol not different than male water
+
+test_2 <- full_join(test$M_EtOH, test$F_H2O) 
+View(test_2)
+bartlett.test(cFos_Sum ~ Sex, data = test_2) #Male ethanol not different than female water
+
+#male water fdr correction 
+p.adjust(c(0.02189, 0.06131, 0.05702), method = "fdr") #none significant
+
+#Are any mice outliers?
+boxplot(tmp$cFos_Sum, col = "blue",
+  ylab = "Sum of c-Fos density (cells/mm3)")
+#No outliers identified from the boxplot
+
+lower_bound <- quantile(tmp$cFos_Sum, 0.025)
+upper_bound <- quantile(tmp$cFos_Sum, 0.975)
+outlier_ind <- which(tmp$cFos_Sum < lower_bound | tmp$cFos_Sum > upper_bound)
+outlier_ind
+# 4 mice are outside the 95% percentile bounds: 8,44,120, (all male water), 143 (female water)
+
+#Hampel filter - outliers are >3 median standard deviations
+lower_bound <- median(tmp$cFos_Sum) - 3 * mad(tmp$cFos_Sum, constant = 1)
+upper_bound <- median(tmp$cFos_Sum) + 3 * mad(tmp$cFos_Sum, constant = 1)
+outlier_ind <- which(tmp$cFos_Sum < lower_bound | tmp$cFos_Sum > upper_bound)
+outlier_ind
+#2 mice are outside the Hampel filter, 44 and 120
+```
+
+### Supplemental Figure S8D
+Is c-Fos density different between hemispheres?
+```{r}
+test2 <- cFos_397_redux_SQRT %>%
+	group_by(Region_Info$Hemisphere) %>%
+	summarize(across(everything(), 
+	                 list(mean = mean, sum = sum)))
+View(test2) #Mean and Sum of c-Fos expression for each hemisphere for each mouse
+
+test3 <- pivot_longer(ungroup(test2), 2:123, 
+                      names_to = c("sample","operation"), 
+                      names_sep = "_",
+                      values_to = "value")
+View(test3)
+
+test3 %>% group_by(test3$`Region_Info$Hemisphere`) %>% 
+  filter(operation == "sum") %>% 
+  summarise(sum(value)) 
+
+cFos_hemi <- ggbetweenstats(test3 %>% filter(operation == "sum"), 
+               x=`Region_Info$Hemisphere`, 
+               y=value, 
+               ylab = "Sum of c-Fos density (cells/mm3)",
+               xlab = "Hemisphere",
+               title = "Total c-Fos density by Hemisphere") + 
+    ggplot2::scale_y_continuous(
+    limits = c(0, 15000), 
+    breaks = seq(from = 0, to = 15000, by = 5000))
+
+cFos_hemi 
+
+ggsave("cFos_hemi.svg", 
+       width = 8, 
+       height = 6, 
+       units = "in")
+```
+
+## Supplemental Figure S8E, Supplemental Table 4 
+Principal Components Analysis (PCA)
+```{r}
+plottingData_PCA_sqrt_redux <- plot_PCA(cFos_397_redux_SQRT,
+                                  Mouse_Info,
+                                  c("Sex", "Fluid"),
+                                  nPC = 10,
+                                  plot=FALSE) 
+View(plottingData_PCA_sqrt_redux$anova)#Shows PCs, associated variance, and calculated 1-way ANOVA p-values for each factor's association with each PC
+
+tmp_PCA <- plottingData_PCA_sqrt_redux$heatmap
+tmp_PCA
+
+svglite::svglite("cFos_PCA_heatmap.svg",
+                width = 7,
+                height = 5)
+draw(tmp_PCA)
+dev.off()
+
+# #Color Schemes for each variable:
+#   #Sex:  female -"#F48FB1", male -"darkorange" 
+# plottingData_PCA_sqrt_redux_sex <- plot_PCA(cFos_397_redux_SQRT,
+#                                   Mouse_Info,
+#                                   "Sex",
+#                                   nPC = 10, 
+#                                   plot=FALSE)
+# plottingData_PCA_sqrt_redux_sex$summary_plot
+# 
+# #Fluid: ethanol -"#008000" water - "blue"
+# plottingData_PCA_sqrt_redux_fluid <- plot_PCA(cFos_397_redux_SQRT,
+#                                   Mouse_Info,
+#                                   "Fluid",
+#                                   nPC = 10, 
+#                                   plot=FALSE) 
+# plottingData_PCA_sqrt_redux_fluid$summary_plot
+```
+
+## Split data by Sex and Fluid groups
+```{r}
+#All Water Drinkers
+Info_W <- Mouse_Info %>% filter(Fluid =="H2O") %>% pull(name)
+Info_W <- Info_W %>% as.character(Info_W)
+W <- cFos_397_redux_SQRT %>% select(all_of(Info_W)) #Selects water drinkers from the data set
+
+#All Ethanol Drinkers
+Info_E <- Mouse_Info %>% filter(Fluid=="EtOH") %>% pull(name)
+Info_E <- Info_E %>% as.character()
+E <- cFos_397_redux_SQRT %>% select(all_of(Info_E)) #Selects ethanol drinkers from the data set
+
+#All Females
+Info_F <- Mouse_Info %>% filter(Sex=="F") %>% pull(name)
+Info_F <- Info_F %>% as.character(Info_F)
+F_all <- cFos_397_redux_SQRT %>% select(all_of(Info_F)) #selects females from the data set
+
+#All Males
+Info_M <- Mouse_Info %>% filter(Sex=="M") %>% pull(name)
+Info_M <- Info_M %>% as.character()
+M_all <- cFos_397_redux_SQRT %>% select(all_of(Info_M))
+
+#Female Ethanol
+Info_FEt <- Mouse_Info %>% filter(Sex=="F" , Fluid=="EtOH") %>% pull(name)
+Info_FEt <- Info_FEt %>% as.character(Info_FEt)
+FEt <- cFos_397_redux_SQRT %>% select(all_of(Info_FEt)) #selects female ethanol drinkers from the data set
+
+#Female Water
+Info_FWa <- Mouse_Info %>% filter(Sex=="F" , Fluid=="H2O") %>% pull(name)
+Info_FWa <- Info_FWa %>% as.character()
+FWa <- cFos_397_redux_SQRT %>% select(all_of(Info_FWa))
+
+#Male Ethanol
+Info_MEt <- Mouse_Info %>% filter(Sex=="M" , Fluid=="EtOH") %>% pull(name)
+Info_MEt <- Info_MEt %>% as.character(Info_MEt)
+MEt <- cFos_397_redux_SQRT %>% select(all_of(Info_MEt)) #selects male ethanol drinkers from the data set
+
+#Male Water
+Info_MWa <- Mouse_Info %>% filter(Sex=="M" , Fluid=="H2O") %>% pull(name)
+Info_MWa <- Info_MWa %>% as.character(Info_MWa)
+MWa <- cFos_397_redux_SQRT %>% select(all_of(Info_MWa)) 
+```
+
+## Figure 3A, Hierarchical Clustering
+Is c-Fos expression profile different between sex and fluid groups?
+```{r}
+#Calculate average c-Fos density per region for sex and fluid subgroups
+Avg_cFos_SxFluid <- data.frame(row.names = Region_Info$name,
+                      F_EtOH = rowMeans(FEt),
+                      F_H2O = rowMeans(FWa), 
+                      M_H2O = rowMeans(MWa),
+                      M_EtOH = rowMeans(MEt))
+View(Avg_cFos_SxFluid)
+max(Avg_cFos_SxFluid)
+
+col_fun = colorRamp2(c(0, 25, 50, 75, 103), c("white", "yellow", "orange", "red", "darkred"))
+
+tmp_heat <- Heatmap(as.matrix(Avg_cFos_SxFluid), 
+        show_row_names = FALSE, 
+        show_column_names = TRUE, 
+        column_title = "Sex & Fluid Groups", 
+        row_title = "Regions", 
+        col = col_fun, 
+        column_dend_height = unit(1, "cm"), 
+        heatmap_legend_param = list(title = "sqrt(c-Fos density)",
+                                    title_position = "leftcenter-rot"), 
+         
+        row_dend_width = unit(15, "mm"))
+
+tmp_heat
+
+svglite::svglite("heatmap.svg",
+                width = 5,
+                height = 8)
+draw(tmp_heat)
+dev.off()
+
+ggsave("cFos_heatmap.svg",
+       width = 5, 
+       height = 8, 
+       units = "in")
+```
+
+## Figure 3B, Supplemental Table S5 
+Compare c-Fos differential expression between water drinking mice 
+```{r}
+MWa #Male water drinkers
+FWa #Female water drinkers 
+
+pval_water <- double(nrow(MWa)) 
+for(n in 1:nrow(MWa)) {pval_water[n] <- t.test(x = MWa[n, ], y = FWa[n, ])$p.val} #calculated p-value comparing male and female water groups c-Fos density
+
+MAplotData_397_water <- data.frame(lfc = log2(rowMeans(FWa)+1) - log2(rowMeans(MWa)+1),
+                           pval = -log10(pval_water),
+                           region = rownames(cFos_397_redux_SQRT)) #Add 1 to log expressions to prevent infinities
+View(MAplotData_397_water) #Dataframe comparing c-Fos expression between male and female water drinking mice
+
+#Volcano plot colored by p-val
+MAplotData_397_water1 <- MAplotData_397_water %>% mutate(hsig = if_else(abs(pval) > 1.3, 2 , 0),
+	dir = sign(lfc),
+	color = hsig*dir,
+	color = factor(color))
+View(MAplotData_397_water1) #color value assigned to regions with -log(pval)>1.3
+
+tmp_scatter1 <- ggscatter(MAplotData_397_water1, 
+                          x="lfc", 
+                          y="pval", 
+                          color="color", 
+          title = "Water Male vs. Female", 
+          xlab = "log fold change", 
+          ylab = "-log10(p-value)",
+  palette = c("blue","gray","red")) +
+  geom_hline(yintercept=1.3, linetype = "dashed") + 
+  geom_vline(xintercept = 0) +
+  xlim(-1.0, 1.15) + 
+  ylim(0, 5)
+
+tmp_scatter1
+
+ggsave("VP_Water_MvF.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+
+#Regions with p.val >1.3 and lfc >0 (higher expression in female water mice)
+vtest <- data.frame(region = MAplotData_397_water1 %>%
+	filter(color == 2) %>%
+	pull(region), 
+	pval = MAplotData_397_water1 %>%
+	filter(color == 2) %>%
+	pull(pval),
+  lfc = MAplotData_397_water1 %>%
+	filter(color == 2) %>%
+	pull(lfc)) 
+View(vtest)
+
+#Regions with p.val >1.3 and lfc <0 (higher expression in male water mice)
+v1test <- data.frame(region = MAplotData_397_water1 %>%
+	filter(color == -2) %>%
+	pull(region), 
+	pval = MAplotData_397_water1 %>%
+	filter(color == -2) %>%
+	pull(pval),
+  lfc = MAplotData_397_water1 %>%
+	filter(color == -2) %>%
+	pull(lfc)) 
+View(v1test)
+```
+
+## Figure 3C, Supplemental Table S5
+Compare c-Fos differential expression between ethanol drinking mice
+```{r}
+MEt #Male ethanol drinkers
+FEt #Female ethanol drinkers
+
+pval_ethanol <- double(nrow(MEt)) 
+for(n in 1:nrow(MEt)) {pval_ethanol[n] <- t.test(x = MEt[n, ], y = FEt[n, ])$p.val} #calculated p-value comparing male water and ethanol groups
+
+MAplotData_397_ethanol <- data.frame(lfc = log2(rowMeans(FEt)+1) - log2(rowMeans(MEt)+1),
+                           pval = -log10(pval_ethanol),
+                           region = rownames(cFos_397_redux_SQRT)) #Add 1 to log expressions to prevent infinities
+View(MAplotData_397_ethanol) #Dataframe comparing c-Fos expression between male and female ethanol drinking mice
+ 
+#Volcano plot colored by p-val and lfc
+MAplotData_397_ethanol1 <- MAplotData_397_ethanol %>% mutate(hsig = if_else(abs(pval) > 1.3, 2, 0),
+	dir = sign(pval),
+	color = hsig*dir,
+	color = factor(color))
+View(MAplotData_397_ethanol1) #color value assigned to regions with -log(pval)>1.3
+
+MAplotData_397_ethanol_fdr <- MAplotData_397_ethanol1 %>% mutate(fdr = p.adjust(pval_ethanol, method = "fdr"))
+View(MAplotData_397_ethanol_fdr) 
+
+MAplotData_397_ethanol_fdr%>% count(fdr < 0.05) #10 survive fdr<0.05
+MAplotData_397_ethanol_fdr%>% count(fdr < 0.1) #44 survive fdr<0.1
+MAplotData_397_ethanol_fdr%>% count(fdr < 0.2) #195 survive fdr<0.2
+
+tmp_scatter2 <- ggscatter(MAplotData_397_ethanol1, 
+                          x="lfc", 
+                          y="pval", 
+                          color="color", 
+          title = "Ethanol Male vs. Female", 
+          xlab = "log fold change", 
+          ylab = "-log10(p-value)",
+  palette = c("gray","red")) +
+  geom_hline(yintercept=1.3, linetype = "dashed") + 
+  geom_vline(xintercept = 0) +
+  xlim(-1.0, 1.15) + 
+  ylim(0, 5)
+
+tmp_scatter2
+
+ggsave("VP_EtOH_MvF.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+
+#Regions with p.val >1.3 and lfc >0 (higher expression in female ethanol mice)
+diff_cFos <- data.frame(region = MAplotData_397_ethanol1 %>%
+	filter(color == 2) %>%
+	pull(region), 
+	pval = MAplotData_397_ethanol1 %>%
+	filter(color == 2) %>%
+	pull(pval),
+  lfc = MAplotData_397_ethanol1 %>%
+	filter(color == 2) %>%
+	pull(lfc)) 
+View(diff_cFos)
+
+# Anatomical category of regions with differential c-Fos expression 
+rownames(MAplotData_397_ethanol1) %in% Region_Info$name
+tmp <- MAplotData_397_ethanol1 %>% mutate(Anat_Cat = Region_Info$Allen_Group_Name,
+                                          Hemisphere = Region_Info$Hemisphere)
+View(tmp)
+
+temp <- tmp %>% filter(tmp$region %in% diff_cFos$region)
+View(temp)  
+
+temp %>%
+        group_by(Anat_Cat) %>%
+        tally()
+
+# Hemisphere of regions with differential c-Fos expression 
+temp %>%
+        group_by(Hemisphere) %>%
+        tally()
+
+left <- 40
+right <- 89
+test = data.frame(left,right)
+View(test)
+print(chisq.test(test)) 
+
+#Overlap between differential c-fos regions and regions associated with addiction stage
+cFos_binge <- intersect(diff_cFos$region, binge) #26 regions
+cFos_withdrawal <- intersect(diff_cFos$region, withdrawal) #6 regions
+cFos_craving <- intersect(diff_cFos$region, craving) #15 regions
+
+#### Overlap with Differential c-Fos+GFP expression
+intersect(diff_cFos$region, diff_cFos_GFP$region)
+```
+
+### Supplemental Figure S9A, Supplemental Table S5
+Ethanol vs Water (sex collapsed)
+```{r}
+E #All Ethanol drinkers
+W #All Water drinkers 
+
+pval_all <- double(nrow(W)) 
+for(n in 1:nrow(W)) {pval_all[n] <- t.test(x = W[n, ], y = E[n, ])$p.val} #calculated p-value comparing each region between water and ethanol groups 
+
+MAplotData_397 <- data.frame(lfc = log2(rowMeans(E)+1) - log2(rowMeans(W)+1),
+                          pval = -log10(pval_all),
+                          region = rownames(cFos_397_redux_SQRT)) #Add 1 to log expressions to prevent infinities
+view(MAplotData_397) #Dataframe comparing c-Fos expression between ethanol and water drinkers with log fold change (lfc), average expression, -log(p-val), and region names
+
+#Plot colored by p-val and direction of lfc
+MAplotData_397_1 <- MAplotData_397 %>% mutate(hsig = if_else(abs(pval) > 1.3, 2 , 0),
+	dir = sign(lfc),
+	color = hsig*dir,
+	color = factor(color))
+view(MAplotData_397_1) #color value assigned to regions with -log(pval)>1.3
+
+MAplotData_397_1_fdr <- MAplotData_397_1 %>% mutate(fdr = p.adjust(pval_all, method = "fdr"))
+View(MAplotData_397_1_fdr) 
+
+MAplotData_397_1_fdr %>% count(fdr < 0.05) #1 survive fdr<0.05
+MAplotData_397_1_fdr %>% count(fdr < 0.1) #2 survive fdr<0.1
+MAplotData_397_1_fdr %>% count(fdr < 0.2) #2 survive fdr<0.2
+
+tmp_scatter3 <- ggscatter(MAplotData_397_1, 
+                          x="lfc", 
+                          y="pval", 
+                          color="color", 
+          title = "Ethanol vs. Water", 
+          xlab = "log fold change", 
+          ylab = "-log10(p-value)",
+  palette = c("blue","gray","red")) +
+  geom_hline(yintercept=1.3, linetype = "dashed") + 
+  geom_vline(xintercept = 0) +
+  xlim(-1.0, 1.15) +
+  ylim(0, 5) 
+
+tmp_scatter3
+
+ggsave("VP_EtOHvH2O.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+
+#Regions with p.val >1.3 and lfc >0 (higher expression in ethanol drinking mice)
+ztest <- data.frame(region = MAplotData_397_1 %>%
+	filter(color == 2 ) %>%
+	pull(region), 
+	pval = MAplotData_397_1 %>%
+	filter(color == 2 ) %>%
+	pull(pval),
+  lfc = MAplotData_397_1 %>%
+	filter(color == 2 ) %>%
+	pull(lfc)) 
+view(ztest)
+
+#Regions with p.val >1.3 and lfc <0 (higher expression in water drinking mice)
+z1test <- data.frame(region = MAplotData_397_1 %>%
+	filter(color == -2 ) %>%
+	pull(region), 
+	pval = MAplotData_397_1 %>%
+	filter(color == -2 ) %>%
+	pull(pval),
+  lfc = MAplotData_397_1 %>%
+	filter(color == -2 ) %>%
+	pull(lfc)) 
+view(z1test)
+```
+
+### Supplemental Figure S9B, Supplemental Table S5
+Male vs Female (fluid collapsed)
+```{r}
+F_all #All Females
+M_all #All Males
+
+pval_sex <- double(nrow(F_all)) 
+for(n in 1:nrow(F_all)) {pval_sex[n] <- t.test(x = F_all[n, ], y = M_all[n, ])$p.val} #calculated p-value comparing all rows in female and male groups, which are stored in 2 separate data frames.
+
+MAplotData_397_sex <- data.frame( lfc = log2(rowMeans(F_all)+1) - log2(rowMeans(M_all)+1),
+                          pval = -log10(pval_sex),
+                          region = rownames(cFos_397_redux_SQRT)) #Add 1 to log expressions to prevent infinities
+View(MAplotData_397_sex) #Dataframe comparing c-Fos expression between male and females
+
+#Plot colored by p-val and direction of lfc
+MAplotData_397_sex1 <- MAplotData_397_sex %>% mutate(hsig = if_else(abs(pval) > 1.3, 2 , 0),
+	dir = sign(pval),
+	color = hsig*dir,
+	color = factor(color))
+view(MAplotData_397_sex1) #color value assigned to regions with -log(pval)>1.3
+
+tmp_scatter4 <- ggscatter(MAplotData_397_sex1, 
+                          x="lfc", 
+                          y="pval", 
+                          color="color", 
+          title = "Females vs. Males", 
+          xlab = "log fold change", 
+          ylab = "-log10(p-value)",
+  palette = c("gray","red")) +
+  geom_hline(yintercept=1.3, linetype = "dashed") + 
+  geom_vline(xintercept = 0) +
+  xlim(-1.0, 1.15) + 
+  ylim(0, 5)
+
+tmp_scatter4
+
+ggsave("VP_FvM.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+
+#Regions with p.val >1.3 and lfc >0 (higher expression in female mice)
+ytest <- data.frame(region = MAplotData_397_sex1 %>%
+	filter(color == 2 ) %>%
+	pull(region), 
+	pval = MAplotData_397_sex1 %>%
+	filter(color == 2 ) %>%
+	pull(pval),
+  lfc = MAplotData_397_sex1 %>%
+	filter(color == 2 ) %>%
+	pull(lfc)) 
+View(ytest)
+```
+
+### Supplemental Figure S9C, Supplemental Table S5
+Female Ethanol vs Water
+```{r}
+FEt #Female ethanol 
+FWa #Female water
+
+pval_F <- double(nrow(FWa)) 
+for(n in 1:nrow(FWa)) {pval_F[n] <- t.test(x = FWa[n, ], y = FEt[n, ])$p.val} #calculated p-value comparing female water and ethanol groups, which are stored in 2 separate data frames. 
+
+MAplotData_397_F <- data.frame( lfc = log2(rowMeans(FEt)+1) - log2(rowMeans(FWa)+1),
+                          pval = -log10(pval_F),
+                          region = rownames(cFos_397_redux_SQRT)) #Add 1 to log expressions to prevent infinities
+View(MAplotData_397_F) #Dataframe comparing c-Fos expression between female ethanol and water drinking mice
+
+#Plot colored by p-val and direction of lfc
+MAplotData_397_F1 <- MAplotData_397_F %>% mutate(hsig = if_else(abs(pval) > 1.3, 2 , 0),
+	dir = sign(lfc),
+	color = hsig*dir,
+	color = factor(color))
+View(MAplotData_397_F1) #color value assigned to regions with -log(pval)>1.3
+
+tmp_scatter5 <- ggscatter(MAplotData_397_F1, 
+                          x="lfc", 
+                          y="pval", 
+                          color="color", 
+          title = "Female Ethanol vs. Water", 
+          xlab = "log fold change", 
+          ylab = "-log10(p-value)",
+  palette = c("blue","gray","red")) +
+  geom_hline(yintercept=1.3, linetype = "dashed") + 
+  geom_vline(xintercept = 0) +
+  xlim(-1.0, 1.15) + 
+  ylim(0, 5)
+
+tmp_scatter5
+
+ggsave("VP_F_EtOHvH2O.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+
+#Regions with p.val >1.3 and lfc >0 (higher expression in female ethanol mice)
+xtest <- data.frame(region = MAplotData_397_F1 %>%
+	filter(color == 2 ) %>%
+	pull(region), 
+	pval = MAplotData_397_F1 %>%
+	filter(color == 2 ) %>%
+	pull(pval),
+  lfc = MAplotData_397_F1 %>%
+	filter(color == 2 ) %>%
+	pull(lfc)) 
+View(xtest)
+
+#Regions with p.val >1.3 and lfc <0 (higher expression in female water mice)
+x1test <- data.frame(region = MAplotData_397_F1 %>%
+	filter(color == -2 ) %>%
+	pull(region), 
+	pval = MAplotData_397_F1 %>%
+	filter(color == -2 ) %>%
+	pull(pval),
+  lfc = MAplotData_397_F1 %>%
+	filter(color == -2 ) %>%
+	pull(lfc)) 
+View(x1test)
+```
+
+### Supplemental Figure S9D, Supplemental Table S5
+Male Ethanol vs Water
+```{r}
+MEt #Male Ethanol
+MWa #Male Water
+
+pval_M <- double(nrow(MWa)) 
+for(n in 1:nrow(MWa)) {pval_M[n] <- t.test(x = MWa[n, ], y = MEt[n, ])$p.val} #calculated p-value comparing male water and ethanol groups
+
+MAplotData_397_M <- data.frame(lfc = log2(rowMeans(MEt)+1) - log2(rowMeans(MWa)+1),
+                               pval = -log10(pval_M),
+                               region = rownames(cFos_397_redux_SQRT)) #Add 1 to log expressions to prevent infinities
+View(MAplotData_397_M) #Dataframe comparing c-Fos expression between male ethanol and water drinking mice
+
+#Plot colored by p-val
+MAplotData_397_M1 <- MAplotData_397_M %>% mutate(hsig = if_else(abs(pval) > 1.3, 2 , 0),
+	dir = sign(lfc),
+	color = hsig*dir,
+	color = factor(color))
+view(MAplotData_397_M1) #color value assigned to regions with -log(pval)>1.3
+
+tmp_scatter6 <- ggscatter(MAplotData_397_M1, 
+                          x="lfc", 
+                          y="pval", 
+                          color="color", 
+          title = "Male Ethanol vs. Water", 
+          xlab = "log fold change", 
+          ylab = "-log10(p-value)",
+  palette = c("blue", "gray","red")) +
+  geom_hline(yintercept=1.3, linetype = "dashed") + 
+  geom_vline(xintercept = 0) +
+  xlim(-1.0, 1.15) + 
+  ylim(0, 5)
+
+tmp_scatter6
+
+ggsave("VP_M_EtOHvH2O.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+
+#Regions with p.val >1.3 and lfc >0 (higher expression in male ethanol mice)
+wtest <- data.frame(region = MAplotData_397_M1 %>%
+	filter(color == 2 ) %>%
+	pull(region), 
+	pval = MAplotData_397_M1 %>%
+	filter(color == 2) %>%
+	pull(pval),
+  lfc = MAplotData_397_M1 %>%
+	filter(color == 2) %>%
+	pull(lfc)) 
+View(wtest)
+
+#Regions with p.val >1.3 and lfc <0 (higher expression in male water mice)
+w1test <- data.frame(region = MAplotData_397_M1 %>%
+	filter(color == -2) %>%
+	pull(region), 
+	pval = MAplotData_397_M1 %>%
+	filter(color == -2) %>%
+	pull(pval),
+  lfc = MAplotData_397_M1 %>%
+	filter(color == -2) %>%
+	pull(lfc)) 
+View(w1test)
+```
+
+### Supplemental Figures S9E-F - Differential c-Fos regions when ethanol intake matched
+```{r}
+#Supplemental Figure S9E
+#NS difference in 4hr ethanol intake 
+F_4hr <- cFos_397_redux_SQRT %>%
+  select(c("113","141","159","155","147","151","25","129","137","101","1"))
+View(F_4hr)
+
+M_4hr <- cFos_397_redux_SQRT %>%
+  select(c("150","130","154","126","26","158", "102","14", "138","2","142","134","38"))
+View(M_4hr)
+
+pval_4hr <- double(nrow(F_4hr)) 
+for(n in 1:nrow(F_4hr)) {pval_4hr[n] <- t.test(x = F_4hr[n, ], y = M_4hr[n, ])$p.val} #calculated p-value comparing male water and ethanol groups
+
+ethanol_4hr <- data.frame(lfc = log2(rowMeans(F_4hr)+1) - log2(rowMeans(M_4hr)+1),
+                           pval = -log10(pval_4hr),
+                           region = rownames(cFos_397_redux_SQRT)) #Add 1 to log expressions to prevent infinities
+View(ethanol_4hr) #Dataframe comparing c-Fos expression between male and female ethanol drinking mice
+
+#Volcano plot colored by p-val and lfc
+ethanol_4hr1 <- ethanol_4hr %>% mutate(hsig = if_else(abs(pval) > 1.3, 2, 0),
+	dir = sign(pval),
+	color = hsig*dir,
+	color = factor(color))
+View(ethanol_4hr1)
+
+tmp_scat <- ggscatter(ethanol_4hr1, 
+                      x="lfc", 
+                      y="pval", 
+                      color="color", 
+          title = "Ethanol Male vs. Female 4hr intake matched", 
+          xlab = "log fold change", 
+          ylab = "-log10(p-value)",
+  palette = c("gray","red")) +
+  geom_hline(yintercept=1.3, linetype = "dashed") + 
+  geom_vline(xintercept = 0) +
+  xlim(-1.0, 1.15) + 
+  ylim(0, 5)
+
+tmp_scat
+
+ggsave("VP_EtOH_MvF_4hr_match.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+
+diff_cFos_4hr <- data.frame(region = ethanol_4hr1 %>%
+	filter(color == 2) %>%
+	pull(region), 
+	pval = ethanol_4hr1 %>%
+	filter(color == 2) %>%
+	pull(pval),
+  lfc = ethanol_4hr1 %>%
+	filter(color == 2) %>%
+	pull(lfc)) 
+View(diff_cFos_4hr) #76 regions with greater c-Fos in Female ethanol relative to male ethanol
+
+cFos_4hr <- intersect(diff_cFos$region, diff_cFos_4hr$region) #68/129 regions match
+
+#Supplemental Figure S9F
+#NS difference in 4-day ethanol intake
+F_4d <- cFos_397_redux_SQRT %>%
+  select(c("141","129","113","137","145","159","101"))
+View(F_4d)
+
+M_4d <- cFos_397_redux_SQRT %>%
+  select(c("150","114","158","102","2","146","38","154","14","142","138"))
+View(M_4d)
+
+pval_4d <- double(nrow(F_4d)) 
+for(n in 1:nrow(F_4d)) {pval_4d[n] <- t.test(x = F_4d[n, ], y = M_4d[n, ])$p.val} #calculated p-value comparing male water and ethanol groups
+
+ethanol_4d <- data.frame(lfc = log2(rowMeans(F_4d)+1) - log2(rowMeans(M_4d)+1),
+                           pval = -log10(pval_4d),
+                           region = rownames(cFos_397_redux_SQRT)) #Add 1 to log expressions to prevent infinities
+View(ethanol_4d) #Dataframe comparing c-Fos expression between male and female ethanol drinking mice
+ 
+#Volcano plot colored by p-val and lfc
+ethanol_4d1 <- ethanol_4d %>% mutate(hsig = if_else(abs(pval) > 1.3, 2, 0),
+	dir = sign(pval),
+	color = hsig*dir,
+	color = factor(color))
+View(ethanol_4d1)
+
+tmp_scat1 <- ggscatter(ethanol_4d1, 
+                       x="lfc", 
+                       y="pval", 
+                       color="color", 
+          title = "Ethanol Male vs. Female 4 day intake matched", 
+          xlab = "log fold change", 
+          ylab = "-log10(p-value)",
+  palette = c("gray","red")) +
+  geom_hline(yintercept=1.3, linetype = "dashed") + 
+  geom_vline(xintercept = 0) +
+  xlim(-1.0, 1.15) + 
+  ylim(0, 5)
+
+tmp_scat1
+
+ggsave("VP_EtOH_MvF_4day_match.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+
+diff_cFos_4d <- data.frame(region = ethanol_4d1 %>%
+	filter(color == 2) %>%
+	pull(region), 
+	pval = ethanol_4d1 %>%
+	filter(color == 2) %>%
+	pull(pval),
+  lfc = ethanol_4d1 %>%
+	filter(color == 2) %>%
+	pull(lfc)) 
+View(diff_cFos_4d) #48 regions with greater c-Fos in female ethanol relative to male ethanol
+
+cFos_4d <- intersect(diff_cFos$region, diff_cFos_4d$region) #41/129 regions match
 ```
 
 # Network Analysis: Method 1 - Correlation Matrix Networks
-## Figure 3A, Male water - Correlations heatmaps & clusters 
+## Figure 4A, Male water - Correlations heatmaps & clusters 
 ```{r}
 #MWa - male water drinkers only
+View(MWa)
+
 MWa_trans <- MWa %>% t()
 #view(MWa_trans)
 MWa_per_corr <- cor(MWa_trans, method = "pearson")
@@ -1234,7 +2032,9 @@ corrplot(MWa_per_corr,
          title = "Male Water") 
 
 # Regions in each module at 70% tree cut height
-MWa_70 <- as.data.frame(MWa_hvk$cluster_70)
+MWa_70 <- as.data.frame(row.names = rownames(MWa_hvk),
+  MWa_hvk$cluster_70)
+MWa_70 <- MWa_70 %>% rownames_to_column(var="region")
 #View(MWa_70)
 
 MWa_per_IMC <- intramodularConnectivity(adjMat = MWa_per_corr,
@@ -1245,7 +2045,127 @@ MWa_per_IMC <- MWa_per_IMC %>% mutate(Module_ID = MWa_hvk$cluster_70)
 View(MWa_per_IMC)
 ```
 
-## Figure 3B, Female water - Correlations heatmaps & clusters 
+### Test - Are outliers driving the large number of strongly positive correlations?
+```{r}
+#Test with robust correlations (winsorize data)
+View(MWa_trans) #Mice are rows, regions are columns
+
+robust_corr <- WRS2::winall(MWa_trans, tr = 0.1) #trims 10% of the most extreme values for each region (2-3)
+View(robust_corr$cor)
+
+MWa_hclust_avg_test <- hclust(1 - as.dist(robust_corr$cor), method = 'average')
+
+MWa_hvk_test <- data.frame(cluster_30 = cutree(MWa_hclust_avg_test, h=.30), 
+                      cluster_40 = cutree(MWa_hclust_avg_test, h=.40), 
+                      cluster_50 = cutree(MWa_hclust_avg_test, h=.50),
+                      cluster_60 = cutree(MWa_hclust_avg_test, h=.60),
+                      cluster_66 = cutree(MWa_hclust_avg_test, h=.66),
+                      cluster_70 = cutree(MWa_hclust_avg_test, h=.70),
+                      cluster_75 = cutree(MWa_hclust_avg_test, h=.75),
+                      cluster_80 = cutree(MWa_hclust_avg_test, h=.80),
+                      cluster_90 = cutree(MWa_hclust_avg_test, h=.90))
+View(MWa_hvk_test)
+
+#Let x, y be two brain region
+x = runif(15)
+y = runif(15)
+win_test <- data_frame(x = MWa_trans[,1],
+                       x_win = datawizard::winsorize(x, threshold = 0.2),
+                       y = MWa_trans[,2],
+                       y_win = datawizard::winsorize(y, threshold = 0.2),
+                       i = 1:length(x))
+#Visualize
+ggplot(win_test) +
+  geom_point(aes(y = sort(x), x = i )) +
+  geom_point(aes(y = sort(x_win), x = i, color = "winsorized")) +
+  theme_bw(base_size = 14)
+
+data_frame(
+  pearson = cor(win_test$x, win_test$y),
+  winsored_manual = cor(win_test$x_win, win_test$y_win),
+  winsored_correlation = correlation::correlation(win_test[,c("x", "y")], winsorize = 0.1)$r,
+  winsored_WRS2 = WRS2::wincor(x,y)$cor
+)
+
+#Visualize Winsorized data versus original 
+ggplot(win_test) +
+  geom_point(aes(x = x, y = y, color = "Original"))+
+  geom_smooth(aes(x = x, y = y, color = "Original"), se = F, method='lm') +
+  geom_point(aes(x = x_win, y = y_win, color = "Winsorized"))+
+  geom_smooth(aes(x = x_win, y = y_win, color = "Winsorized"), se = F, method='lm') +
+  theme_bw(base_size = 14)
+
+WRS2::wincor(MWa_trans[,1],MWa_trans[,2], tr = 0.1)$cor 
+
+c <- WRS2::winall(MWa_trans, tr = 0.1)$cor[1,2]
+
+cor(MWa_trans[,1],MWa_trans[,2], method = "pearson")
+
+#Mean absolute change in correlation
+mean(abs((MWa_per_corr-robust_corr$cor)))
+
+ggpubr::ggdensity(data_frame(diff =(abs(MWa_per_corr)-abs(robust_corr$cor))[upper.tri(MWa_per_corr)]), x = "diff")
+
+data_frame(diff = (abs(MWa_per_corr)-abs(robust_corr$cor))[upper.tri(MWa_per_corr)]) %>%
+  count(abs(diff) > 0.25)
+
+diff = (abs(MWa_per_corr)-abs(robust_corr$cor))
+hist(diff[abs(diff) > 0.25], breaks = 100)
+
+hist(rowSums(abs(diff) > 0.5), breaks = 100)
+
+which( rowSums(abs(diff) > 0.25) > 100 ) #When data was winsorized, 13 regions have correlations changed >0.25 R with at least 100 other regions
+which( rowSums(abs(diff) > 0.5) > 26)
+
+corrplot(robust_corr$cor, 
+         type = "full", 
+         tl.pos = "n",
+         method = "color", 
+         cl.pos = "n",
+         col = colorRampPalette(c("darkblue", "blue", "white", "red", "darkred"))(100),
+         order = "hclust", 
+         hclust.method = "average", 
+         addrect = 5, #Modules at 70% tree cut height 
+         title = "Winsorized Male Water")
+
+#Test with eliminating high and low mice
+MWa_trans <- as.data.frame(MWa_trans) %>% mutate(cFos_Sum = rowSums(MWa_trans))
+View(MWa_trans)
+
+test <- MWa_trans[-4,]
+test = select(test, -427)
+test <- test[-5,]
+View(test)
+
+MWa_per_corr_test <- cor(test, method = "pearson")
+View(MWa_per_corr_test)
+
+MWa_hclust_avg_test <- hclust(1 - as.dist(MWa_per_corr_test), method = 'average')
+
+MWa_hvk_test <- data.frame(cluster_30 = cutree(MWa_hclust_avg_test, h=.30), 
+                      cluster_40 = cutree(MWa_hclust_avg_test, h=.40), 
+                      cluster_50 = cutree(MWa_hclust_avg_test, h=.50),
+                      cluster_60 = cutree(MWa_hclust_avg_test, h=.60),
+                      cluster_66 = cutree(MWa_hclust_avg_test, h=.66),
+                      cluster_70 = cutree(MWa_hclust_avg_test, h=.70),
+                      cluster_75 = cutree(MWa_hclust_avg_test, h=.75),
+                      cluster_80 = cutree(MWa_hclust_avg_test, h=.80),
+                      cluster_90 = cutree(MWa_hclust_avg_test, h=.90))
+View(MWa_hvk_test)
+
+corrplot(MWa_per_corr_test, 
+         type = "full", 
+         tl.pos = "n",
+         method = "color", 
+         cl.pos = "n",
+         col = colorRampPalette(c("darkblue", "blue", "white", "red", "darkred"))(100),
+         order = "hclust", 
+         hclust.method = "average", 
+         addrect = 7, #Modules at 70% tree cut height 
+         title = "Male Water")
+```
+
+## Figure 4B, Female water - Correlations heatmaps & clusters 
 ```{r}
 #FWa - data set of just female water drinkers
 FWa_trans <- FWa %>% t()
@@ -1287,7 +2207,7 @@ FWa_per_IMC <- FWa_per_IMC %>% mutate(Module_ID = FWa_hvk$cluster_70)
 View(FWa_per_IMC)
 ```
 
-## Figure 3C, Male ethanol - Correlation heatmaps & clusters
+## Figure 4C, Male ethanol - Correlation heatmaps & clusters
 ```{r}
 #MEt - data set of just male ethanol drinkers
 MEt_trans <- MEt %>% t()
@@ -1332,7 +2252,7 @@ MEt_per_IMC <- MEt_per_IMC %>% mutate(Module_ID = MEt_hvk$cluster_70)
 View(MEt_per_IMC)
 ```
 
-## Figure 3D, Female ethanol - Correlations heatmaps & clusters 
+## Figure 4D, Female ethanol - Correlations heatmaps & clusters 
 ```{r}
 #FEt - data set of just female ethanol drinkers
 FEt_trans <- FEt %>% t()
@@ -1376,7 +2296,7 @@ FEt_per_IMC <- FEt_per_IMC %>% mutate(Module_ID = FEt_hvk$cluster_70)
 View(FEt_per_IMC)
 ```
 
-## Supplemental Figure S8A, Anatomical Category
+## Supplemental Figure S10A, Anatomical Category
 ```{r}
 View(Region_Info)
 Regions_Anatomy <- split(Region_Info$name, Region_Info$Allen_Group_Name) #Creates list of region names in each module 
@@ -1402,11 +2322,18 @@ View(plot_MWa_Anat_num)
 
 x<-plot_MWa_Anat_num$Module
 
-ggplot(plot_MWa_Anat_num, aes(x=Module, y=Proportion, fill=Category))+
+tmp_anat_plot4 <- ggplot(plot_MWa_Anat_num, aes(x=Module, y=Proportion, fill=Category))+
   geom_bar(width = .9, stat = "identity") +
   scale_x_continuous(labels=as.character(x),breaks=x) + 
   scale_fill_viridis(discrete = TRUE, option = "H", aesthetics = "fill") +
   labs(title = "Male Water")
+
+tmp_anat_plot4
+
+ggsave("MH2O_anat_plot.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 
 # Female Water
 FWa_mod_regions <- split(FWa_per_IMC$region, FWa_per_IMC$Module_ID) #Creates list of region names in each module 
@@ -1429,11 +2356,18 @@ View(plot_FWa_Anat_num)
 
 x<-plot_FWa_Anat_num$Module
 
-ggplot(plot_FWa_Anat_num, aes(x=Module, y=Proportion, fill=Category))+
+tmp_anat_plot <- ggplot(plot_FWa_Anat_num, aes(x=Module, y=Proportion, fill=Category))+
   geom_bar(width = .9, stat = "identity") +
   scale_x_continuous(labels=as.character(x),breaks=x) + 
   scale_fill_viridis(discrete = TRUE, option = "H", aesthetics = "fill") +
   labs(title = "Female Water")
+
+tmp_anat_plot
+
+ggsave("FH2O_anat_plot.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 
 # Male Ethanol
 MEt_mod_regions <- split(MEt_per_IMC$region, MEt_per_IMC$Module_ID) #Creates list of region names in each module 
@@ -1455,11 +2389,18 @@ View(plot_MEt_Anat_num)
 
 x<-plot_MEt_Anat_num$Module
 
-ggplot(plot_MEt_Anat_num, aes(x=Module, y=Proportion, fill=Category))+
+tmp_anat_plot1 <- ggplot(plot_MEt_Anat_num, aes(x=Module, y=Proportion, fill=Category))+
   geom_bar(width = .9, stat = "identity") +
   scale_x_continuous(labels=as.character(x),breaks=x) + 
   scale_fill_viridis(discrete = TRUE, option = "H", aesthetics = "fill") +
   labs(title = "Male Ethanol")
+
+tmp_anat_plot1
+
+ggsave("MEtOH_anat_plot.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 
 # Female Ethanol 
 FEt_mod_regions <- split(FEt_per_IMC$region, FEt_per_IMC$Module_ID) #Creates list of region names in each module 
@@ -1480,14 +2421,21 @@ plot_FEt_Anat_num$Module = as.numeric(as.character(plot_FEt_Anat_num$Module))
 
 x<-plot_FEt_Anat_num$Module
 
-ggplot(plot_FEt_Anat_num, aes(x=Module, y=Proportion, fill=Category))+
+tmp_anat_plot2 <- ggplot(plot_FEt_Anat_num, aes(x=Module, y=Proportion, fill=Category))+
   geom_bar(width = .9, stat = "identity") +
   scale_x_continuous(labels=as.character(x),breaks=x)+ 
   scale_fill_viridis(discrete = TRUE, option = "H", aesthetics = "fill") +
   labs(title = "Female Ethanol")
+
+tmp_anat_plot2
+
+ggsave("FEtOH_anat_plot.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-## Supplemental Figure S8B, Hemisphere
+## Supplemental Figure S10B, Hemisphere
 ```{r}
 Regions_Hemi <- split(Region_Info$name, Region_Info$Hemisphere) #Creates list of region names in each module 
 View(Regions_Hemi)
@@ -1510,10 +2458,17 @@ View(plot_MWa_Hemi)
 
 x<-plot_MWa_Hemi$Module
 
-ggplot(plot_MWa_Hemi, aes(x=Module, y=Proportion, fill=Hemisphere))+
+tmp_hemi_plot4 <- ggplot(plot_MWa_Hemi, aes(x=Module, y=Proportion, fill=Hemisphere))+
   geom_bar(width = .9, stat = "identity") +
   scale_x_continuous(labels=as.character(x),breaks=x) + 
   labs(title = "Male Water")
+
+tmp_hemi_plot4
+
+ggsave("MH2O_hemi_plot.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 
 # Female Water
 FWa_Hemi_Mod_num <- sapply(FWa_mod_regions, 
@@ -1532,10 +2487,17 @@ View(plot_FWa_Hemi)
 
 x<-plot_FWa_Hemi$Module
 
-ggplot(plot_FWa_Hemi, aes(x=Module, y=Proportion, fill=Hemisphere))+
+tmp_hemi_plot <- ggplot(plot_FWa_Hemi, aes(x=Module, y=Proportion, fill=Hemisphere))+
   geom_bar(width = .9, stat = "identity") +
   scale_x_continuous(labels=as.character(x),breaks=x) + 
   labs(title = "Female Water")
+
+tmp_hemi_plot
+
+ggsave("FH2O_hemi_plot.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 
 # Male Ethanol
 MEt_Hemi_Mod_num <- sapply(MEt_mod_regions, 
@@ -1554,10 +2516,17 @@ View(plot_MEt_Hemi)
 
 x<-plot_MEt_Hemi$Module
 
-ggplot(plot_MEt_Hemi, aes(x=Module, y=Proportion, fill=Hemisphere))+
+tmp_hemi_plot1 <- ggplot(plot_MEt_Hemi, aes(x=Module, y=Proportion, fill=Hemisphere))+
   geom_bar(width = .9, stat = "identity") +
   scale_x_continuous(labels=as.character(x),breaks=x) + 
   labs(title = "Male Ethanol")
+
+tmp_hemi_plot1
+
+ggsave("MEtOH_hemi_plot.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 
 # Female Ethanol
 FEt_Hemi_Mod_num <- sapply(FEt_mod_regions, 
@@ -1576,13 +2545,175 @@ View(plot_FEt_Hemi)
 
 x<-plot_FEt_Hemi$Module
 
-ggplot(plot_FEt_Hemi, aes(x=Module, y=Proportion, fill=Hemisphere))+
+tmp_hemi_plot2 <- ggplot(plot_FEt_Hemi, aes(x=Module, y=Proportion, fill=Hemisphere))+
   geom_bar(width = .9, stat = "identity") +
   scale_x_continuous(labels=as.character(x),breaks=x) + 
   labs(title = "Female Ethanol")
+
+tmp_hemi_plot2
+
+ggsave("FEtOH_hemi_plot.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-## Supplemental Figure S8C, Intramodular Correlation
+## Module overlap with functional networks
+```{r}
+#Binge/Intoxication
+# Male Water
+MWa_binge_num <- sapply(MWa_mod_regions, 
+                       function(x) length(intersect(binge, x))) 
+View(MWa_binge_num) #All binge-related regions are in module 1
+
+MWa_binge_overlap <- sapply(MWa_mod_regions, function(x) fisher.test(MWa_per_IMC$region %in% x,
+                                          MWa_per_IMC$region %in% binge,  
+                                           alternative = "g")$p.value) 
+View(MWa_binge_overlap) 
+
+MWa_binge_overlap_fdr <- as.data.frame(MWa_binge_overlap) %>% mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
+View(MWa_binge_overlap_fdr)
+
+#Female Water
+FWa_binge_num <- sapply(FWa_mod_regions, 
+                       function(x) length(intersect(binge, x))) 
+View(FWa_binge_num)
+
+FWa_binge_overlap <- sapply(FWa_mod_regions, function(x) fisher.test(FWa_per_IMC$region %in% x,
+                                          FWa_per_IMC$region %in% binge,  
+                                           alternative = "g")$p.value) 
+View(FWa_binge_overlap) 
+
+FWa_binge_overlap_fdr <- as.data.frame(FWa_binge_overlap) %>% mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
+View(FWa_binge_overlap_fdr) #Module 2 significantly overlaps with binge 
+
+#Male Ethanol
+MEt_binge_num <- sapply(MEt_mod_regions, 
+                       function(x) length(intersect(binge, x))) 
+View(MEt_binge_num)
+
+MEt_binge_overlap <- sapply(MEt_mod_regions, function(x) fisher.test(MEt_per_IMC$region %in% x,
+                                          MEt_per_IMC$region %in% binge,  
+                                           alternative = "g")$p.value) 
+View(MEt_binge_overlap) 
+
+MEt_binge_overlap_fdr <- as.data.frame(MEt_binge_overlap) %>% mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
+View(MEt_binge_overlap_fdr) #Modules 4 and 8 significantly overlaps with binge 
+
+#Female Ethanol
+FEt_binge_num <- sapply(FEt_mod_regions, 
+                       function(x) length(intersect(binge, x))) 
+View(FEt_binge_num)
+
+FEt_binge_overlap <- sapply(FEt_mod_regions, function(x) fisher.test(FEt_per_IMC$region %in% x,
+                                          FEt_per_IMC$region %in% binge,  
+                                           alternative = "g")$p.value) 
+View(FEt_binge_overlap) #No modules significantly overlaps with binge 
+
+#Witdrawal/Negative affect
+# Male Water
+MWa_withdrawal_num <- sapply(MWa_mod_regions, 
+                       function(x) length(intersect(withdrawal, x))) 
+View(MWa_withdrawal_num) #All withdrawal-related regions are in module 1
+
+MWa_withdrawal_overlap <- sapply(MWa_mod_regions, function(x) fisher.test(MWa_per_IMC$region %in% x,
+                                          MWa_per_IMC$region %in% withdrawal,  
+                                           alternative = "g")$p.value) 
+View(MWa_withdrawal_overlap) #no significant overlap 
+
+# Female Water
+FWa_withdrawal_num <- sapply(FWa_mod_regions, 
+                       function(x) length(intersect(withdrawal, x))) 
+View(FWa_withdrawal_num) 
+
+FWa_withdrawal_overlap <- sapply(FWa_mod_regions, function(x) fisher.test(FWa_per_IMC$region %in% x,
+                                          FWa_per_IMC$region %in% withdrawal,  
+                                           alternative = "g")$p.value) 
+View(FWa_withdrawal_overlap) #Modules 3 + 4 significant
+
+FWa_withdrawal_overlap_fdr <- as.data.frame(FWa_withdrawal_overlap) %>%
+  mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
+View(FWa_withdrawal_overlap_fdr) #No modules survive multiple comparisons correction
+
+# Male Ethanol
+MEt_withdrawal_num <- sapply(MEt_mod_regions, 
+                       function(x) length(intersect(withdrawal, x))) 
+View(MEt_withdrawal_num) 
+
+MEt_withdrawal_overlap <- sapply(MEt_mod_regions, function(x) fisher.test(MEt_per_IMC$region %in% x,
+                                          MEt_per_IMC$region %in% withdrawal,  
+                                           alternative = "g")$p.value) 
+View(MEt_withdrawal_overlap) #Modules 2 + 7 significant
+
+MEt_withdrawal_overlap_fdr <- as.data.frame(MEt_withdrawal_overlap) %>%
+  mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
+View(MEt_withdrawal_overlap_fdr) #Module 2 has significant representation of withdrawal associated regions
+
+# Female Ethanol
+FEt_withdrawal_num <- sapply(FEt_mod_regions, 
+                       function(x) length(intersect(withdrawal, x))) 
+View(FEt_withdrawal_num) 
+
+FEt_withdrawal_overlap <- sapply(FEt_mod_regions, function(x) fisher.test(FEt_per_IMC$region %in% x,
+                                          FEt_per_IMC$region %in% withdrawal,  
+                                           alternative = "g")$p.value) 
+View(FEt_withdrawal_overlap) #Modules 7,8,10 significant
+
+FEt_withdrawal_overlap_fdr <- as.data.frame(FEt_withdrawal_overlap) %>%
+  mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
+View(FEt_withdrawal_overlap_fdr) #Module 7 has significant representation of withdrawal associated regions
+
+#Preoccupation/Anticipation/Craving
+# Male Water
+MWa_craving_num <- sapply(MWa_mod_regions, 
+                       function(x) length(intersect(craving, x))) 
+View(MWa_craving_num) #All withdrawal-related regions are in module 1
+
+MWa_craving_overlap <- sapply(MWa_mod_regions, function(x) fisher.test(MWa_per_IMC$region %in% x,
+                                          MWa_per_IMC$region %in% craving,  
+                                           alternative = "g")$p.value) 
+View(MWa_craving_overlap) #no significant overlap 
+
+# Female Water
+FWa_craving_num <- sapply(FWa_mod_regions, 
+                       function(x) length(intersect(craving, x))) 
+View(FWa_craving_num) 
+
+FWa_craving_overlap <- sapply(FWa_mod_regions, function(x) fisher.test(FWa_per_IMC$region %in% x,
+                                          FWa_per_IMC$region %in% craving,  
+                                           alternative = "g")$p.value) 
+View(FWa_craving_overlap) #no significant overlap 
+
+# Male Ethanol
+MEt_craving_num <- sapply(MEt_mod_regions, 
+                       function(x) length(intersect(craving, x))) 
+View(MEt_craving_num) 
+
+MEt_craving_overlap <- sapply(MEt_mod_regions, function(x) fisher.test(MEt_per_IMC$region %in% x,
+                                          MEt_per_IMC$region %in% craving,  
+                                           alternative = "g")$p.value) 
+View(MEt_craving_overlap) #Modules 1 significant
+
+MEt_craving_overlap_fdr <- as.data.frame(MEt_craving_overlap) %>%
+  mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
+View(MEt_craving_overlap_fdr) #Module 1 has significant representation of withdrawal associated regions
+
+# Female Ethanol
+FEt_craving_num <- sapply(FEt_mod_regions, 
+                       function(x) length(intersect(craving, x))) 
+View(FEt_craving_num) 
+
+FEt_craving_overlap <- sapply(FEt_mod_regions, function(x) fisher.test(FEt_per_IMC$region %in% x,
+                                          FEt_per_IMC$region %in% craving,  
+                                           alternative = "g")$p.value) 
+View(FEt_craving_overlap) #Modules 2 + 4 significant
+
+FEt_craving_overlap_fdr <- as.data.frame(FEt_craving_overlap) %>%
+  mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
+View(FEt_craving_overlap_fdr) #No modules survive multiple comparisons
+```
+
+## Supplemental Figure S10C, Intramodular Correlation
 ### Male Water
 ```{r}
 rownames(MWa_per_corr) %in% MWa_per_IMC$region
@@ -1632,13 +2763,20 @@ View(tmp3)
 tmp4 <- tmp3 %>% filter(p.value < 0.05) #remove non-significant comparison so it doesn't show on plot
 View(tmp4)
 
-base_plot +  ggsignif::geom_signif(
+tmp_mod_plot4 <- base_plot +  ggsignif::geom_signif(
     comparisons = tmp4$groups,
     map_signif_level = TRUE,
     annotations = tmp4$asterisk_label,
     y_position = c(0.79, 0.87),
     test = NULL, 
     tip_length = 0)
+
+tmp_mod_plot4
+
+ggsave("MH2O_mod_plot.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
 ### Female Water
@@ -1691,7 +2829,7 @@ tmp3[is.na(tmp3)] <- "***"
 tmp4 <- tmp3 %>% filter(p.value < 0.05) #remove non-significant comparison so it doesn't show on plot
 View(tmp4)
 
-base_plot +  ggsignif::geom_signif(
+tmp_mod_plot <- base_plot +  ggsignif::geom_signif(
     comparisons = tmp4$groups,
     map_signif_level = TRUE,
     annotations = tmp4$asterisk_label,
@@ -1699,6 +2837,13 @@ base_plot +  ggsignif::geom_signif(
     test = NULL,
     na.rm = TRUE, 
     tip_length = 0)
+
+tmp_mod_plot
+
+ggsave("FH2O_mod_plot.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
 ### Male Ethanol
@@ -1751,7 +2896,7 @@ tmp3[is.na(tmp3)] <- "***"
 tmp4 <- tmp3 %>% filter(p.value < 0.05) #remove non-significant comparison so it doesn't show on plot
 View(tmp4)
 
-base_plot + ggsignif::geom_signif(
+tmp_mod_plot1 <- base_plot + ggsignif::geom_signif(
     comparisons = tmp4$groups,
     map_signif_level = TRUE,
     annotations = tmp4$asterisk_label,
@@ -1759,6 +2904,13 @@ base_plot + ggsignif::geom_signif(
     test = NULL,
     na.rm = TRUE, 
     tip_length = 0)
+
+tmp_mod_plot1
+
+ggsave("MEtOH_mod_plot.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
 ### Female Ethanol
@@ -1810,7 +2962,7 @@ View(tmp3)
 tmp4 <- tmp3 %>% filter(p.value < 0.05) #remove non-significant comparison so it doesn't show on plot
 View(tmp4)
 
-base_plot +  ggsignif::geom_signif(
+tmp_mod_plot2 <- base_plot +  ggsignif::geom_signif(
     comparisons = tmp4$groups,
     map_signif_level = TRUE,
     annotations = tmp4$asterisk_label,
@@ -1818,9 +2970,16 @@ base_plot +  ggsignif::geom_signif(
     test = NULL,
     na.rm = TRUE, 
     tip_length = 0)
+
+tmp_mod_plot2
+
+ggsave("FEtOH_mod_plot.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-## Figure 3E, Male Water and Ethanol Module Overlap
+## Figure 4E, Male Water and Ethanol Module Overlap
 ```{r}
 Male_Mod_num <- sapply(MEt_mod_regions, 
                        function(module) { sapply(MWa_mod_regions, 
@@ -1855,26 +3014,28 @@ col_mat[Male_overlap_fdr > 0.05] = "lightgray"
 
 Male_chord <- as.matrix(Male_chord)
 
+svglite::svglite("M_chord_plot.svg",
+                width = 6,
+                height = 4)
+
 chordDiagram(Male_chord, 
              group = group, 
              grid.col = grid.col, 
              col=col_mat,
              big.gap = 5, small.gap = 2.5,
              annotationTrack = "grid", 
-                   preAllocateTracks = list(track.height = 0.3)
+                   preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(Male_chord)))))
          )
-circos.trackPlotRegion(track.index = 1, panel.fun = function(x, y) {
-xlim = get.cell.meta.data("xlim")
-ylim = get.cell.meta.data("ylim")
-sector.name = get.cell.meta.data("sector.index")
-circos.text(CELL_META$xcenter, ylim[1] + cm_h(1.5),sector.name,
-        facing = "clockwise",niceFacing = TRUE, adj = c(0, 0.5), cex = 0.6)
-circos.axis(h = "bottom",labels.cex = 0.4,sector.index = sector.name)
-}, bg.border = NA) +  
+circos.track(track.index = 1, panel.fun = function(x, y) {
+    circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index,
+        facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5), cex = 0.6)
+}, bg.border = NA)  +
   title("Male Module Overlap")
+
+dev.off()
 ```
 
-## Figure 3F, Female Water and Ethanol Module Overlap
+## Figure 4F, Female Water and Ethanol Module Overlap
 ```{r}
 Female_overlap_num <- sapply(FWa_mod_regions, 
                        function(module) { sapply(FEt_mod_regions, 
@@ -1909,26 +3070,28 @@ col_mat[Female_overlap_fdr > 0.05] = "lightgray"
 
 Female_chord <- as.matrix(Female_chord)
 
+svglite::svglite("F_chord_plot.svg",
+                width = 6,
+                height = 4)
+
 chordDiagram(Female_chord, 
              group = group, 
              grid.col = grid.col, 
              col=col_mat,
              big.gap = 5, small.gap = 2.5,
-             annotationTrack = "grid", 
-                   preAllocateTracks = list(track.height = 0.3)
+             annotationTrack = "grid",  
+                   preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(Female_chord)))))
          )
-circos.trackPlotRegion(track.index = 1, panel.fun = function(x, y) {
-xlim = get.cell.meta.data("xlim")
-ylim = get.cell.meta.data("ylim")
-sector.name = get.cell.meta.data("sector.index")
-circos.text(CELL_META$xcenter, ylim[1] + cm_h(1.5),sector.name,
-        facing = "clockwise",niceFacing = TRUE, adj = c(0, 0.5), cex = 0.6)
-circos.axis(h = "bottom",labels.cex = 0.4,sector.index = sector.name)
+circos.track(track.index = 1, panel.fun = function(x, y) {
+    circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index,
+        facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5), cex = 0.6)
 }, bg.border = NA) +  
   title("Female Module Overlap")
+
+dev.off()
 ```
 
-## Figure 3G, Male Water and Female Water Module Overlap
+## Figure 4G, Male Water and Female Water Module Overlap
 ```{r}
 H2O_overlap_num <- sapply(FWa_mod_regions, 
                        function(module) { sapply(MWa_mod_regions, 
@@ -1963,26 +3126,28 @@ col_mat[H2O_overlap_fdr > 0.05] = "lightgray"
 
 H2O_chord <- as.matrix(H2O_chord)
 
+svglite::svglite("H2O_chord_plot.svg",
+                width = 6,
+                height = 4)
+
 chordDiagram(H2O_chord, 
              group = group, 
              grid.col = grid.col, 
              col=col_mat,
              big.gap = 5, small.gap = 2.5,
              annotationTrack = "grid", 
-                   preAllocateTracks = list(track.height = 0.3)
+                   preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(H2O_chord)))))
          )
-circos.trackPlotRegion(track.index = 1, panel.fun = function(x, y) {
-xlim = get.cell.meta.data("xlim")
-ylim = get.cell.meta.data("ylim")
-sector.name = get.cell.meta.data("sector.index")
-circos.text(CELL_META$xcenter, ylim[1] + cm_h(1.5),sector.name,
-        facing = "clockwise",niceFacing = TRUE, adj = c(0, 0.5), cex = 0.6)
-circos.axis(h = "bottom",labels.cex = 0.4,sector.index = sector.name)
-}, bg.border = NA) +  
+circos.track(track.index = 1, panel.fun = function(x, y) {
+    circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index,
+        facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5), cex = 0.6)
+}, bg.border = NA)  +  
   title("Water Module Overlap")
+
+dev.off()
 ```
 
-## Figure 3H, Male Ethanol and Female Ethanol Module Overlap
+## Figure 4H, Male Ethanol and Female Ethanol Module Overlap
 ```{r}
 EtOH_overlap_num <- sapply(FEt_mod_regions, 
                        function(module) { sapply(MEt_mod_regions, 
@@ -2019,26 +3184,28 @@ View(col_mat)
 
 EtOH_chord <- as.matrix(EtOH_chord)
 
+svglite::svglite("EtOH_chord_plot.svg",
+                width = 6,
+                height = 4)
+
 chordDiagram(EtOH_chord, 
              group = group, 
              grid.col = grid.col,
              col=col_mat,
              big.gap = 5, small.gap = 2.5,
              annotationTrack = "grid", 
-                   preAllocateTracks = list(track.height = 0.3)
+                   preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(EtOH_chord)))))
          )
-circos.trackPlotRegion(track.index = 1, panel.fun = function(x, y) {
-xlim = get.cell.meta.data("xlim")
-ylim = get.cell.meta.data("ylim")
-sector.name = get.cell.meta.data("sector.index")
-circos.text(CELL_META$xcenter, ylim[1] + cm_h(1.5),sector.name,
-        facing = "clockwise",niceFacing = TRUE, adj = c(0, 0.5), cex = 0.6)
-circos.axis(h = "bottom",labels.cex = 0.4,sector.index = sector.name)
-}, bg.border = NA) +  
+circos.track(track.index = 1, panel.fun = function(x, y) {
+    circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index,
+        facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5), cex = 0.6)
+}, bg.border = NA)  +  
   title("Ethanol Module Overlap")
+
+dev.off()
 ```
 
-## Supplemental Figure S8D, Supplemental Table S7, 9, 11, 13, Type of hub and nodes, Supplemental Tables S6, 8, 10, 12 Hubs 
+## Supplemental Figure S10D, Supplemental Table S6-9, Type of hub and nodes, Supplemental Tables S10-13 Hubs 
 ### Male Water
 ```{r}
 MWa_per_IMC <- MWa_per_IMC %>% mutate(Participation = (1-(MWa_per_IMC$kWithin/MWa_per_IMC$kTotal))) #Participation is a ratio of how connected a node is to others in its module, versus to the network as a whole
@@ -2068,9 +3235,16 @@ MWa_table <- MWa_per_all %>%
         tally()
 View(MWa_table)
 
+svglite::svglite("MWa_pie.svg",
+                width = 6,
+                height = 4)
+
 pie(MWa_table$n, labels = paste(MWa_table$Type, MWa_table$n, sep=" -"),
    main="Male Water Node Types", 
-   col = c("#FC8D62", "#E78AC3","#A6D854", "#FFD92F", "#E5C494"))
+   col = c("#FC8D62", "#E78AC3","#A6D854", "#FFD92F", "#E5C494"), 
+   cex =.8)
+
+dev.off()
 ```
 
 ### Female Water 
@@ -2100,10 +3274,18 @@ View(FWa_per_all)
 FWa_table <- FWa_per_all %>%
         group_by(Type) %>%
         tally()
+View(FWa_table)
+
+svglite::svglite("FWa_pie.svg",
+                width = 6,
+                height = 4)
 
 pie(FWa_table$n, labels = paste(FWa_table$Type, FWa_table$n, sep=" -"),
    main="Female Water Node Types", 
-   col = brewer.pal(n = 7, name = "Set2"))
+   col = brewer.pal(n = 7, name = "Set2"), 
+   cex =.8)
+
+dev.off()
 ```
 
 ### Male Ethanol 
@@ -2134,10 +3316,18 @@ View(MEt_per_all)
 MEt_table <- MEt_per_all %>%
         group_by(Type) %>%
         tally()
+View(MEt_table)
+
+svglite::svglite("MEt_pie.svg",
+                width = 6,
+                height = 4)
 
 pie(MEt_table$n, labels = paste(MEt_table$Type, MEt_table$n, sep=" -"),
    main="Male Ethanol Node Types", 
-   col = brewer.pal(n = 7, name = "Set2"))
+   col = brewer.pal(n = 7, name = "Set2"), 
+   cex =.8)
+
+dev.off()
 ```
 
 ### Female Ethanol
@@ -2167,13 +3357,21 @@ View(FEt_per_all)
 FEt_table <- FEt_per_all %>%
         group_by(Type) %>%
         tally()
+View(FEt_table)
+
+svglite::svglite("FEt_pie.svg",
+                width = 6,
+                height = 4)
 
 pie(FEt_table$n, labels = paste(FEt_table$Type, FEt_table$n, sep=" -"),
    main="Female Ethanol Node Types", 
-   col = brewer.pal(n = 7, name = "Set2"))
+   col = brewer.pal(n = 7, name = "Set2"), 
+   cex =.8)
+
+dev.off()
 ```
 
-## Supplemental Figure S9
+## Supplemental Figure S11 - Correlations per sex and fluid group
 ```{r}
 rownames(MEt_per_corr) %in% Region_Info$name
 Region_Info1 <- Region_Info %>% arrange(Allen_Group_Name)
@@ -2255,7 +3453,7 @@ Avg_Corr_Anat <- Avg_Corr_Anat %>% pivot_longer(cols=c(1:4),
 View(Avg_Corr_Anat)
 ```
 
-### S9A Cortical Plate
+### S11A Cortical Plate
 ```{r}
 cortical_plate <- Avg_Corr_Anat %>% filter(Anat_Group == "Cortical Plate") #filters rows by Cortical plate
 View(cortical_plate)
@@ -2292,9 +3490,14 @@ base_plot +  ggsignif::geom_signif(
     test = NULL,
     na.rm = TRUE, 
     tip_length = 0)
+
+ggsave("cortical plate.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-### S9B Cortical Subplate
+### S11B Cortical Subplate
 ```{r}
 cortical_subplate <- Avg_Corr_Anat %>% filter(Anat_Group == "Cortical Subplate") #filters rows by Cortical subplate
 View(cortical_subplate)
@@ -2329,9 +3532,14 @@ base_plot +  ggsignif::geom_signif(
     test = NULL,
     na.rm = TRUE, 
     tip_length = 0)
+
+ggsave("cortical_subplate.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-### S9C Hindbrain
+### S11C Hindbrain
 ```{r}
 hindbrain <- Avg_Corr_Anat %>% filter(Anat_Group == "Hindbrain") #filters rows by Hindbrain
 View(hindbrain)
@@ -2368,9 +3576,14 @@ base_plot +  ggsignif::geom_signif(
     test = NULL,
     na.rm = TRUE, 
     tip_length = 0)
+
+ggsave("hindbrain.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-### S9D Hypothalamus
+### S11D Hypothalamus
 ```{r}
 hypothalamus <- Avg_Corr_Anat %>% filter(Anat_Group == "Hypothalamus") #filters rows by Hypothalamus
 View(hypothalamus)
@@ -2407,9 +3620,14 @@ base_plot +  ggsignif::geom_signif(
     test = NULL,
     na.rm = TRUE, 
     tip_length = 0)
+
+ggsave("hypothalamus.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-### S9E Midbrain
+### S11E Midbrain
 ```{r}
 midbrain <- Avg_Corr_Anat %>% filter(Anat_Group == "Midbrain") #filters rows by midbrain
 View(midbrain)
@@ -2447,9 +3665,14 @@ base_plot +  ggsignif::geom_signif(
     test = NULL,
     na.rm = TRUE, 
     tip_length = 0)
+
+ggsave("midbrain.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-### S9F Pallidum
+### S11F Pallidum
 ```{r}
 pallidum <- Avg_Corr_Anat %>% filter(Anat_Group == "Pallidum") #filters rows by pallidum
 View(pallidum)
@@ -2486,9 +3709,14 @@ base_plot +  ggsignif::geom_signif(
     test = NULL,
     na.rm = TRUE, 
     tip_length = 0)
+
+ggsave("pallidum.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-### S9G Striatum
+### S11G Striatum
 ```{r}
 striatum <- Avg_Corr_Anat %>% filter(Anat_Group == "Striatum") #filters rows by striatum
 View(striatum)
@@ -2526,9 +3754,14 @@ base_plot +  ggsignif::geom_signif(
     test = NULL,
     na.rm = TRUE, 
     tip_length = 0)
+
+ggsave("striatum.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-### S9H Thalamus
+### S11H Thalamus
 ```{r}
 thalamus <- Avg_Corr_Anat %>% filter(Anat_Group == "Thalamus") #filters rows by Thalamus
 View(thalamus)
@@ -2563,9 +3796,14 @@ base_plot +  ggsignif::geom_signif(
     test = NULL,
     na.rm = TRUE, 
     tip_length = 0)
+
+ggsave("thalamus.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-### S9I Average Correlation per largest module 
+### S11I Average Correlation per largest module 
 ```{r}
 MEt_mod_Avg_corr <- MEt_mod_Avg_corr %>% mutate(Module = paste0("MEt", "_", Module))
 FEt_mod_Avg_corr <- FEt_mod_Avg_corr %>% mutate(Module = paste0("FEt", "_", Module))
@@ -2617,9 +3855,14 @@ base_plot +  ggsignif::geom_signif(
     na.rm = TRUE, 
     tip_length = 0) +
   ggplot2::scale_color_manual(values = c("#C87A8A", "#9189C7","#909646", "#00A396"))
+
+ggsave("largest_module.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-## Supplemental Tables S6, 8, 10, 12, Overrepresentation Analysis
+## Supplemental Tables S10-13, Overrepresentation Analysis
 ### Anatomical Category Overrepresentation 
 ```{r}
 # Male Water
@@ -2755,6 +3998,54 @@ FEt_mod_overlap_fdr <- as.data.frame(FEt_mod_overlap) %>% mutate(across(where(is
 View(FEt_mod_overlap_fdr)
 ```
 
+### Differential c-Fos+GFP region Overrepresentation 
+```{r}
+View(diff_cFos_GFP) #Regions with greater c-Fos+GFP co-expression in female ethanol, relative to male ethanol mice
+
+# Male Water
+MWa_mod_overlap1 <- sapply(MWa_mod_regions, function(x) fisher.test(MWa_per_IMC$region %in% x,
+                                          MWa_per_IMC$region %in% diff_cFos_GFP$region,  
+                                           alternative = "g")$p.value) 
+View(MWa_mod_overlap1) 
+
+cFosgfp_MWaMod_num <- sapply(MWa_mod_regions, 
+                       function(x) length(intersect(diff_cFos_GFP$region, x)) ) 
+View(cFosgfp_MWaMod_num)
+
+# Female Water
+FWa_mod_overlap1 <- sapply(FWa_mod_regions, function(x) fisher.test(FWa_per_IMC$region %in% x,
+                                          FWa_per_IMC$region %in% diff_cFos_GFP$region,  
+                                           alternative = "g")$p.value) 
+View(FWa_mod_overlap1)
+
+cFosgfp_FWaMod_num <- sapply(FWa_mod_regions, 
+                       function(x) length(intersect(diff_cFos_GFP$region, x)) ) 
+View(cFosgfp_FWaMod_num)
+
+# Male Ethanol
+MEt_mod_overlap1 <- sapply(MEt_mod_regions, function(x) fisher.test(MEt_per_IMC$region %in% x,
+                                          MEt_per_IMC$region %in% diff_cFos_GFP$region,  
+                                           alternative = "g")$p.value)
+View(MEt_mod_overlap1) #Module 8 has significant overrepresentation with diff c-Fos+GFP regions
+
+MEt_mod_overlap1_fdr <- as.data.frame(MEt_mod_overlap1) %>% mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
+View(MEt_mod_overlap1_fdr) #Does not survive fdr correction
+
+cFosgfp_MEtMod_num <- sapply(MEt_mod_regions, 
+                       function(x) length(intersect(diff_cFos_GFP$region, x)) ) 
+View(cFosgfp_MEtMod_num)
+
+# Female Ethanol
+FEt_mod_overlap1 <- sapply(FEt_mod_regions, function(x) fisher.test(FEt_per_IMC$region %in% x,
+                                          FEt_per_IMC$region %in% diff_cFos_GFP$region,  
+                                           alternative = "g")$p.value) 
+View(FEt_mod_overlap1) #Module 6 is trending, but not significant overrepresentation of regions with diff c-Fos+GFP
+
+cFosgfp_FEtMod_num <- sapply(FEt_mod_regions, 
+                       function(x) length(intersect(diff_cFos_GFP$region, x)) ) 
+View(cFosgfp_FEtMod_num)
+```
+
 ## Supplemental Tables S14 and S15, Differential Wiring 
 ```{r}
 source("diffWiring.R")
@@ -2785,7 +4076,7 @@ DW_F_EtOH_H2O <- DW_F %>% filter(p.adj < 0.05)
 View(DW_F_EtOH_H2O) 
 ```
 
-# Network Analysis: Method 2 - WGCNA
+# Network Analysis: Method 2 - WRCNA
 ## Data pre-processing
 ```{r}
 options(stringsAsFactors = FALSE)
@@ -2821,7 +4112,7 @@ nSamples = nrow(cFos_sqrt1)
 View(cFos_sqrt1)
 ```
 
-## Figure 4A, Network Construction and Module Detection
+## Figure 5A, Network Construction and Module Detection
 ```{r}
 # Choose a set of soft-thresholding powers
 powers = c(c(1:10), seq(from = 12, to=20, by=2))
@@ -2873,6 +4164,10 @@ net = blockwiseModules(cFos_sqrt1,
 # Plot the dendrogram and the module colors underneath
 mergedColors = labels2colors(net$colors)
 
+svglite::svglite("WGCNA_dendro.svg",
+                width = 6,
+                height = 4)
+
 plotDendroAndColors(net$dendrograms[[1]], 
                     cbind(mergedColors),
                     "Module colors",
@@ -2881,6 +4176,8 @@ plotDendroAndColors(net$dendrograms[[1]],
                     addGuide = TRUE, 
                     guideHang = 0.05, 
                     main = "Overall Cluster Dendrogram")
+
+dev.off()
 
 moduleLabels = net$colors
 moduleColors = labels2colors(net$colors)
@@ -2897,28 +4194,50 @@ Overall_IMC$module = labels2colors(net$colors)
 View(Overall_IMC)
 ```
 
-## Figure 4B Relating modules to external traits
+## Figure 5B Relating modules to external factors
 ```{r}
-Mouse_Info <- Mouse_Info[-c(16),] #excludes outlier 44 from Mouse_Info sheet
+row_names_df_to_remove<-c("44")
+Mouse_Info <- Mouse_Info[!(row.names(Mouse_Info) %in% row_names_df_to_remove),] #excludes outlier 44 from Mouse_Info sheet
 View(Mouse_Info)
-
-#Relationship between MEs in ethanol drinking mice and continuous traits
-cont_Trait <- Mouse_Info %>% select(BEC, "X4hr.EtOH.Intake", Total.4d.EtOH.Intake)
-View(cont_Trait)
 
 MEs0 = moduleEigengenes(cFos_sqrt1, moduleColors)$eigengenes
 MEs = orderMEs(MEs0)
+colnames(MEs) <- str_replace(colnames(MEs),"ME","")
 View(MEs)
+
+#Relationship between MEs and total and 4hr fluid intake
+cont_Trait_fluid <- Mouse_Info %>% select(name, Total_Fluid_Intake, X4hr_Fluid_Intake)
+View(cont_Trait_fluid)
+
+moduleTraitCor_fluid = cor(MEs, cont_Trait_fluid, use = "p") 
+View(moduleTraitCor_fluid)
+
+moduleTraitPvalue_fluid = corPvalueStudent(moduleTraitCor_fluid, 60)
+View(moduleTraitPvalue_fluid)
+
+moduleTraitPvalue_fluid_fdr <- as.data.frame(moduleTraitPvalue_fluid) %>%
+  mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
+View(moduleTraitPvalue_fluid_fdr) #No modules significantly correlated with total 4hr fluid intake or total 4-day fluid intake
+
+# textMatrix_fluid = paste(signif(moduleTraitCor_fluid, 2), "\n(",
+#                    signif(as.matrix(moduleTraitPvalue_fluid_fdr), 1), ")", sep = "")
+# dim(textMatrix_fluid) = dim(moduleTraitCor_fluid)
+# par(mar = c(1, 1, 1, 1))
+# View(textMatrix_fluid)
+
+#Relationship between MEs in ethanol drinking mice and continuous traits
+cont_Trait <- Mouse_Info %>% select(name, BEC, "X4hr.EtOH.Intake", Total.4d.EtOH.Intake)
+View(cont_Trait)
 
 Info_E <- Mouse_Info %>% filter(Fluid=="EtOH") %>% pull(name)
 Info_E <- Info_E %>% as.character()
+
 E <- MEs %>% rownames_to_column("name")
 E <- E %>% filter(name %in% Info_E)
 E <- E %>% column_to_rownames("name")
 View(E)
 
-E_trait <- cont_Trait %>% rownames_to_column("name")
-E_trait <- E_trait %>% filter(name %in% Info_E)
+E_trait <- cont_Trait  %>% filter(name %in% Info_E)
 E_trait <- E_trait %>% column_to_rownames("name")
 View(E_trait)
 
@@ -2929,13 +4248,43 @@ moduleTraitPvalue_EtOH = corPvalueStudent(moduleTraitCor_EtOH, 31)
 View(moduleTraitPvalue_EtOH)
 
 moduleTraitPvalue_EtOH_fdr <- as.data.frame(moduleTraitPvalue_EtOH) %>% mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
-View(moduleTraitPvalue_EtOH_fdr)
+View(moduleTraitPvalue_EtOH_fdr) #5 modules associated with 4hr ethanol intake, 9 modules associated with total 4day ethanol intake
 
-textMatrix_EtOH = paste(signif(moduleTraitCor_EtOH, 2), "\n(",
-                   signif(as.matrix(moduleTraitPvalue_EtOH_fdr), 1), ")", sep = "")
-dim(textMatrix_EtOH) = dim(moduleTraitCor_EtOH)
-par(mar = c(1, 1, 1, 1))
-View(textMatrix_EtOH)
+# textMatrix_EtOH = paste(signif(moduleTraitCor_EtOH, 2), "\n(",
+#                    signif(as.matrix(moduleTraitPvalue_EtOH_fdr), 1), ")", sep = "")
+# dim(textMatrix_EtOH) = dim(moduleTraitCor_EtOH)
+# par(mar = c(1, 1, 1, 1))
+# View(textMatrix_EtOH)
+
+#Relationship between MEs in water drinking mice and continuous traits
+cont_Trait_H2O <- Mouse_Info %>% select(name, X4hr_H2O_Intake)
+View(cont_Trait_H2O)
+
+Info_W <- Mouse_Info %>% filter(Fluid=="H2O") %>% pull(name)
+Info_W <- Info_W %>% as.character()
+W <- MEs %>% rownames_to_column("name")
+W <- W %>% filter(name %in% Info_W)
+W <- W %>% column_to_rownames("name")
+View(W)
+
+W_trait <- cont_Trait_H2O %>% filter(name %in% Info_W)
+W_trait <- W_trait %>% column_to_rownames("name")
+View(W_trait)
+
+moduleTraitCor_H2O = cor(W, W_trait, use = "p") 
+View(moduleTraitCor_H2O)
+
+moduleTraitPvalue_H2O = corPvalueStudent(moduleTraitCor_H2O, 29)
+View(moduleTraitPvalue_H2O)
+
+moduleTraitPvalue_H2O_fdr <- as.data.frame(moduleTraitPvalue_H2O) %>% mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
+View(moduleTraitPvalue_H2O_fdr) #No modules significantly correlated with 4hr water intake
+
+# textMatrix_EtOH = paste(signif(moduleTraitCor_EtOH, 2), "\n(",
+#                    signif(as.matrix(moduleTraitPvalue_EtOH_fdr), 1), ")", sep = "")
+# dim(textMatrix_EtOH) = dim(moduleTraitCor_EtOH)
+# par(mar = c(1, 1, 1, 1))
+# View(textMatrix_2OH)
 
 #Relationship between modules and categorical variables
 tmp <-bind_cols(MEs, Mouse_Info)
@@ -2964,53 +4313,215 @@ tmp3 <- moduleTraitPvalue_EtOH_fdr %>% rownames_to_column("MEs")
 tmp3 <-tmp3[order(tmp3$MEs),]
 View(tmp3)
 
+tmp4 <- moduleTraitPvalue_H2O_fdr %>% rownames_to_column("MEs")
+tmp4 <-tmp4[order(tmp4$MEs),]
+View(tmp4)
+
+tmp5 <- moduleTraitPvalue_fluid_fdr %>% rownames_to_column("MEs")
+tmp5 <-tmp5[order(tmp5$MEs),]
+View(tmp5)
+
 All_trait_assoc <- merge(tmp2, tmp3)
+All_trait_assoc <- merge(All_trait_assoc, tmp4)
+All_trait_assoc <- merge(All_trait_assoc, tmp5)
+All_trait_assoc = subset(All_trait_assoc, select = -c(name) )
+View(All_trait_assoc)
+
 All_trait_assoc <- All_trait_assoc %>% column_to_rownames("MEs")
 All_trait_assoc <- -log10(All_trait_assoc)
 All_trait_assoc <- All_trait_assoc %>% mutate(across(where(is.numeric), function(x) {
     x[x>10] <- 10
-    x[x< -log10(0.05)] <- NA
     return(x)}
     ))
 All_trait_assoc <- All_trait_assoc %>% rename("Day 4 EtOH Intake" = "X4hr.EtOH.Intake", 
                                     "Total EtOH Intake" = "Total.4d.EtOH.Intake", 
+                                    "Day 4 H2O Intake" = "X4hr_H2O_Intake",
+                                    "Day 4 Fluid Intake" = "X4hr_Fluid_Intake",
                                     "Sex*Fluid" = "Sex:Fluid")
-rownames(All_trait_assoc) <- gsub("ME", "", rownames(All_trait_assoc))
+
+#rownames(All_trait_assoc) <- gsub("ME", "", rownames(All_trait_assoc))
+
 colnames(All_trait_assoc)
-All_trait_assoc <- All_trait_assoc[, c(6,5,1,2,3,4)]
+All_trait_assoc <- All_trait_assoc[, c(5, 7, 9, 6, 8, 4, 1, 2, 3)] #reorders columns
+
+rownames(All_trait_assoc)
+All_trait_assoc <- All_trait_assoc[c(10,3,11,7,8,12,17,1,4,13,16,5,14,2,9,15,6),] #reorders rows from modules with most to least number of significant associations
 View(All_trait_assoc)
 
-col_fun = colorRamp2(c(0,1.25, 2.4), hcl_palette = "Inferno")
-lgd = Legend(col_fun = col_fun, title = "-log10(fdr)", title_position = "leftcenter-rot",
-    at = c(0, 1.3, 1.9, 2.5))
+color_order <- c("midnightblue", "brown", "pink", "grey", "lightcyan", "purple","yellow","black",   "cyan","red","turquoise","green", "salmon","blue","magenta",  "tan", "greenyellow")
 
-Heatmap(as.matrix(All_trait_assoc), 
+# col_fun = colorRamp2(c(0,1.25, 2.4), hcl_palette = "Inferno")
+# lgd = Legend(col_fun = col_fun, title = "-log10(fdr)", title_position = "leftcenter-rot",
+#     at = c(0, 1.3, 1.9, 2.5))
+
+#Supplemental Figure S12E - Heatmap with all data 
+tmp_heatmap <- Heatmap(as.matrix(All_trait_assoc), 
         show_row_names = TRUE, 
         show_column_names = TRUE,
         column_names_rot = 90,
         cluster_rows = FALSE,
         cluster_columns = FALSE,
-        column_title = "Traits", 
+        column_title = "Factor", 
         column_title_rot = 0,
         row_title = "Modules", 
-        col = colorRamp2(c(1.3, 2.5), hcl_palette = "Inferno"), 
+        col = circlize::colorRamp2(c(0, 1.3, 2.225, 3.150, 4.075, 5.000), 
+                                   c("black", "white","#00B785","#53CC67","#B2DC3C","#FDE333")), 
         column_dend_height = unit(1, "cm"), 
         rect_gp = gpar(col = "white", lwd = 2),
-        heatmap_legend_param = list(title = "-log10(fdr)", 
-                                    title_position = "leftcenter-rot",
-                                    at = c(1.3, 1.9, 2.5)), 
+        cell_fun = function(j, i, x, y, width, height, fill) 
+                   {
+                     if(All_trait_assoc[i,j] >= -log10(0.05)) {
+                       grid.text("*", x, y, gp = gpar(fontsize = 20, col = "red"))
+                     }
+                     else grid.text("")
+                   },
+        heatmap_legend_param =  list(title = "-log10(fdr)",
+                                               title_position = "leftcenter-rot",
+                                               at = c(0, 1.3, 2.6, 3.9, 5)), 
         right_annotation = rowAnnotation(test = 1:nrow(All_trait_assoc), 
-                                         col=list(test = setNames(sort(unique(mergedColors)),
+                                         col=list(test = setNames(color_order,
                                                                   1:nrow(All_trait_assoc))),
                                          show_legend = c(FALSE),
                                          show_annotation_name = c(FALSE), 
                                          gp = gpar(col = "white")))
+
+svglite::svglite("WGCNA_heatmap.svg",
+                width = 7,
+                height = 5)
+draw(tmp_heatmap)
+dev.off()
+
+#Horizontal Layout
+# All_trait_assoc <- t(All_trait_assoc)
+# 
+# tmp_heatmap_wide <- Heatmap(as.matrix(All_trait_assoc), 
+#         show_row_names = TRUE, 
+#         show_column_names = TRUE,
+#         column_names_rot = 90,
+#         cluster_rows = FALSE,
+#         cluster_columns = FALSE,
+#         column_title = "Modules", 
+#         column_title_rot = 0,
+#         row_title = "Factor", 
+#         col = circlize::colorRamp2(c(0, 1.3,2.225, 3.150, 4.075, 5.000), 
+#                                    c("black", "white","#00B785","#53CC67","#B2DC3C","#FDE333")), 
+#         column_dend_height = unit(1, "cm"), 
+#         rect_gp = gpar(col = "white", lwd = 2),
+#         cell_fun = function(j, i, x, y, width, height, fill) 
+#                    {
+#                      if(All_trait_assoc[i,j] >= -log10(0.05)) {
+#                        grid.text("*", x, y, gp = gpar(fontsize = 20, col = "red"))
+#                      }
+#                      else grid.text("")
+#                    },
+#         heatmap_legend_param =  list(title = "-log10(fdr)",
+#                                                title_position = "leftcenter-rot",
+#                                                at = c(0, 1.3, 2.6, 3.9, 5)), 
+#         bottom_annotation = columnAnnotation(test = 1:ncol(All_trait_assoc), 
+#                                          col=list(test = setNames(color_order,
+#                                                               1:ncol(All_trait_assoc))),
+#                                          show_legend = c(FALSE),
+#                                          show_annotation_name = c(FALSE), 
+#                                          gp = gpar(col = "white")))
+# 
+# svglite::svglite("WGCNA_heatmap_horizontal.svg",
+#                 width = 10,
+#                 height = 4)
+# draw(tmp_heatmap_wide)
+# dev.off()
+
+#Heatmap with just significant data
+Significant_trait_assoc = subset(All_trait_assoc, select = -c(2,3,5,6,8,9) )
+View(Significant_trait_assoc)
+
+tmp_heatmap <- Heatmap(as.matrix(Significant_trait_assoc), 
+        show_row_names = TRUE, 
+        show_column_names = TRUE,
+        column_names_rot = 90,
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        column_title = "Factor", 
+        column_title_rot = 0,
+        row_title = "Modules", 
+        col = circlize::colorRamp2(c(0, 1.3,2.225, 3.150, 4.075, 5.000), 
+                                   c("black", "white","#00B785","#53CC67","#B2DC3C","#FDE333")), 
+        column_dend_height = unit(1, "cm"), 
+        rect_gp = gpar(col = "white", lwd = 2),
+        cell_fun = function(j, i, x, y, width, height, fill) 
+                   {
+                     if(Significant_trait_assoc[i,j] >= -log10(0.05)) {
+                       grid.text("*", x, y, gp = gpar(fontsize = 20, col = "red"))
+                     }
+                     else grid.text("")
+                   },
+        heatmap_legend_param =  list(title = "-log10(fdr)",
+                                               title_position = "leftcenter-rot",
+                                               at = c(0, 1.3, 2.6, 3.9, 5)), 
+        right_annotation = rowAnnotation(test = 1:nrow(Significant_trait_assoc), 
+                                         col=list(test = setNames(color_order,
+                                                              1:nrow(Significant_trait_assoc))),
+                                         show_legend = c(FALSE),
+                                         show_annotation_name = c(FALSE), 
+                                         gp = gpar(col = "white")))
+
+svglite::svglite("WGCNA_signif_heatmap.svg",
+                width = 4,
+                height = 7)
+draw(tmp_heatmap)
+dev.off()
+
+#Horizontal Layout
+# Significant_trait_assoc <- t(Significant_trait_assoc)
+# Heatmap(as.matrix(Significant_trait_assoc))
+# 
+# tmp_heatmap_wide <- Heatmap(as.matrix(Significant_trait_assoc), 
+#         show_row_names = TRUE, 
+#         show_column_names = TRUE,
+#         column_names_rot = 90,
+#         cluster_rows = FALSE,
+#         cluster_columns = FALSE,
+#         column_title = "Modules", 
+#         column_title_rot = 0,
+#         row_title = "Factor", 
+#         col = circlize::colorRamp2(c(0, 1.3,2.225, 3.150, 4.075, 5.000), 
+#                                    c("black", "white","#00B785","#53CC67","#B2DC3C","#FDE333")), 
+#         column_dend_height = unit(1, "cm"), 
+#         rect_gp = gpar(col = "white", lwd = 2),
+#         cell_fun = function(j, i, x, y, width, height, fill) 
+#                    {
+#                      if(Significant_trait_assoc[i,j] >= -log10(0.05)) {
+#                        grid.text("*", x, y, gp = gpar(fontsize = 20, col = "red"))
+#                      }
+#                      else grid.text("")
+#                    },
+#         heatmap_legend_param =  list(title = "-log10(fdr)",
+#                                                title_position = "leftcenter-rot",
+#                                                at = c(0, 1.3, 2.6, 3.9, 5)), 
+#         bottom_annotation = columnAnnotation(test = 1:ncol(Significant_trait_assoc), 
+#                                          col=list(test = setNames(color_order,
+#                                                               1:ncol(Significant_trait_assoc))),
+#                                          show_legend = c(FALSE),
+#                                          show_annotation_name = c(FALSE), 
+#                                          gp = gpar(col = "white")))
+# 
+# svglite::svglite("WGCNA_signif_heatmap_horizontal.svg",
+#                 width = 10,
+#                 height = 4)
+# draw(tmp_heatmap_wide)
+# dev.off()
 ```
 
-## Figure 4C, Midnight Blue Network graphs
+## Figure 5C, Midnight Blue Network graphs 
+Midnight blue module is associated with sex, 4 day ethanol intake, and 4hr ethanol intake
 ### Male Water
 ```{r}
 set.seed(83053)
+
+Info_MWa <- Mouse_Info %>% filter(Sex=="M" , Fluid=="H2O") %>% pull(name)
+Info_MWa <- Info_MWa %>% as.character(Info_MWa)
+MWa <- as.data.frame(t(cFos_sqrt1)) %>% select(all_of(Info_MWa)) 
+View(MWa) #no mouse 44
+
 MWa_graph <- adjacency(t(MWa), power = 8) 
 MWa_graph <- MWa_graph %>% as.data.frame()
 View(MWa_graph)
@@ -3022,15 +4533,44 @@ View(MWa_graph)
 
 all(Overall_IMC$region == Region_Info$name)
 Region_Info <- Region_Info %>% mutate(module = Overall_IMC$module)
+View(Region_Info)
 Info_MBlue <- Region_Info %>% filter(module =="midnightblue") %>% pull(acronym)
 Info_MBlue <- Info_MBlue %>% as.character()
 
+MBlue <- Region_Info %>% filter(module =="midnightblue")
+MBlue <- MBlue %>% mutate(color = case_when(Allen_Group_Name == "Striatum" ~ "#C14020", 
+                                            Allen_Group_Name == "Hypothalamus" ~ "#B6F760",
+                                            Allen_Group_Name == "Midbrain" ~ "#E8D158",
+                                            Allen_Group_Name == "Pallidum" ~ "#EB873D", 
+                                            Allen_Group_Name == "Thalamus" ~ "#70190E"))
+
+MBlue <- MBlue %>% mutate(Allen_Group_Name = factor(Allen_Group_Name, levels = c("Hypothalamus", "Midbrain", "Pallidum", "Striatum", "Thalamus"))) %>% 
+  arrange(Allen_Group_Name)
+View(MBlue)
+
+my_colors <- c("#B6F760", "#B6F760", "#B6F760", "#E8D158", "#E8D158", "#E8D158", "#E8D158", "#EB873D", "#C14020", "#70190E", "#70190E", "#70190E", "#70190E")
+names(my_colors) <- c("LHA-L", "PST-L", "ZI-L", "APN-L", "MRN-L", "RR-L",  "RN-L", "TRS-L", "LSX-L", "CL-L",  "LH-L",  "PF-L","VM-R") #Colors correspond to anatomical category
+
 MWa_MBlue <- MWa_graph[Info_MBlue, Info_MBlue]
 View(MWa_MBlue)
+
+reorder_columns <- match(MBlue$acronym, colnames(MWa_MBlue))
+reorder_rows <- match(MBlue$acronym, rownames(MWa_MBlue))
+MWa_MBlue <- MWa_MBlue[reorder_rows, reorder_columns]
+
+MWa_MBlue <- as.data.frame(MWa_MBlue) %>% rename("APN-L*" = "APN-L", 
+                                              "MRN-L*" ="MRN-L", 
+                                              "RR-L*^" ="RR-L",  
+                                              "RN-L*" = "RN-L", 
+                                              "TRS-L*" ="TRS-L",
+                                              "CL-L*" ="CL-L",
+                                              "PF-L*" ="PF-L",
+                                              "VM-R*" = "VM-R") #*denotes regions with diff c-Fos expression, ^denotes diff c-Fos+GFP
+
 MWa_MBlue <- as.matrix(MWa_MBlue)
 
 MWa_MBlue_graph <- graph_from_adjacency_matrix(
-  MWa_MBlue,
+  as.matrix(MWa_MBlue),
   mode = "undirected",
   weighted = T,
   diag = T) #True since diagonal is already 0
@@ -3039,22 +4579,48 @@ tmp_size <- rowSums(MWa_MBlue)
 tmp_size <- tmp_size / max(tmp_size)
 
 as_tbl_graph(MWa_MBlue_graph) %>%
-   ggraph('igraph', algorithm = 'fr') +
-   geom_edge_arc(lineend = "round",
-                 strength = .1,
-                 aes(edge_width = weight^2,
-                     edge_alpha = weight^2)) +
+   ggraph('igraph', layout = layout.circle(MWa_MBlue_graph), circular = TRUE) +
+  geom_edge_arc(lineend = "round",
+                 aes(edge_width = weight,
+                     edge_alpha = weight)) +
   scale_edge_color_grey(start=0,
                         end=1)+
-  geom_node_point(size = ((tmp_size-min(tmp_size)/2)*8), 
-                  color = "midnightblue") +
-  geom_node_text(aes(label = name), 
+   geom_node_text(aes(label = name), 
                   repel = T,
-                  check_overlap = T,
-                  size = 4,
-                  colour="black") +
+                 check_overlap = T,
+                  size = 4) +
+  geom_node_point(size = ((tmp_size-min(tmp_size)/2)*10), 
+                  fill = my_colors, shape = 21, color = my_colors, stroke = 1) +
   labs(title = "Male Water Midnight Blue Module") +
-  theme_graph(background = "white") 
+  theme_graph(background = "white") +
+  scale_edge_width(limits = c(0,1), 
+                   range = c(0.5, 6)) +
+  scale_edge_alpha(limits = c(0,1), 
+                   range = c(0.1,1))
+
+ggsave("MWa_graph_4NOV.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+```
+
+```{r}
+MWa_IMC <- intramodularConnectivity(adjMat = MWa_graph,
+                                  colors = net$colors) %>% as.data.frame() %>%
+  rownames_to_column(var = "region")
+MWa_IMC$module = labels2colors(net$colors)
+View(MWa_IMC)
+MWa_IMC <- MWa_IMC %>% mutate(Participation = (1-(MWa_IMC$kWithin/MWa_IMC$kTotal)))
+mean(MWa_IMC$Participation)
+
+MWa_tmp <- split(MWa_IMC, MWa_IMC$module)
+
+MWa_means <- lapply(MWa_tmp, function(df) {
+  mean(df$Participation)
+}) 
+
+MWa_means <- unlist(MWa_means)
+View(MWa_means)
 ```
 
 ### Female Water
@@ -3069,7 +4635,21 @@ colnames(FWa_graph) <- Region_Info$acronym
 View(FWa_graph)
 
 FWa_MBlue <- FWa_graph[Info_MBlue, Info_MBlue]
-view(FWa_MBlue)
+View(FWa_MBlue)
+
+reorder_columns <- match(MBlue$acronym, colnames(FWa_MBlue))
+reorder_rows <- match(MBlue$acronym, rownames(FWa_MBlue))
+FWa_MBlue <- FWa_MBlue[reorder_rows, reorder_columns]
+
+FWa_MBlue <- as.data.frame(FWa_MBlue) %>% rename("APN-L*" = "APN-L", 
+                                              "MRN-L*" ="MRN-L", 
+                                              "RR-L*^" ="RR-L",  
+                                              "RN-L*" = "RN-L", 
+                                              "TRS-L*" ="TRS-L",
+                                              "CL-L*" ="CL-L",
+                                              "PF-L*" ="PF-L",
+                                              "VM-R*" = "VM-R") #*denotes regions with diff c-Fos expression, ^denotes diff c-Fos+GFP
+
 FWa_MBlue <- as.matrix(FWa_MBlue)
 
 FWa_MBlue_graph <- graph_from_adjacency_matrix(
@@ -3082,22 +4662,49 @@ tmp_size <- rowSums(FWa_MBlue)
 tmp_size <- tmp_size / max(tmp_size)
 
 as_tbl_graph(FWa_MBlue_graph) %>%
-   ggraph('igraph', algorithm = 'fr') +
+   ggraph('igraph', layout = layout.circle(FWa_MBlue_graph), circular = TRUE) +
    geom_edge_arc(lineend = "round",
-                 strength = .1,
-                 aes(edge_width = weight^2,
-                     edge_alpha = weight^2)) +
+                 aes(edge_width = weight,
+                     edge_alpha = weight)) +
   scale_edge_color_grey(start=0,
                         end=1)+
-  geom_node_point(size = ((tmp_size-min(tmp_size)/2)*8), 
-                  color = "midnightblue") +
+  geom_node_point(size = ((tmp_size-min(tmp_size)/2)*10), 
+                  fill = my_colors, shape = 21, color = my_colors, stroke = 1) +
   geom_node_text(aes(label = name), 
                   repel = T,
                   check_overlap = T,
                   size = 4,
                   colour="black") +
   labs(title = "Female Water Midnight Blue Module") +
-  theme_graph(background = "white") 
+  theme_graph(background = "white") +
+  scale_edge_width(limits = c(0,1), 
+                   range = c(0.5, 6)) +
+  scale_edge_alpha(limits = c(0,1), 
+                   range = c(0.1,1)) #these 2 lines make range of the edges consistent between graphs
+
+ggsave("FWa_graph_4NOV.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+```
+
+```{r}
+FWa_IMC <- intramodularConnectivity(adjMat = FWa_graph,
+                                  colors = net$colors) %>% as.data.frame() %>%
+  rownames_to_column(var = "region")
+FWa_IMC$module = labels2colors(net$colors)
+View(FWa_IMC)
+FWa_IMC <- FWa_IMC %>% mutate(Participation = (1-(FWa_IMC$kWithin/FWa_IMC$kTotal)))
+mean(FWa_IMC$Participation)
+
+FWa_tmp <- split(FWa_IMC, FWa_IMC$module)
+
+FWa_means <- lapply(FWa_tmp, function(df) {
+  mean(df$Participation)
+}) 
+
+FWa_means <- unlist(FWa_means)
+View(FWa_means)
 ```
 
 ### Male Ethanol
@@ -3113,6 +4720,20 @@ View(MEt_graph)
 
 MEt_MBlue <- MEt_graph[Info_MBlue, Info_MBlue]
 View(MEt_MBlue)
+
+reorder_columns <- match(MBlue$acronym, colnames(MEt_MBlue))
+reorder_rows <- match(MBlue$acronym, rownames(MEt_MBlue))
+MEt_MBlue <- MEt_MBlue[reorder_rows, reorder_columns]
+
+MEt_MBlue <- as.data.frame(MEt_MBlue) %>% rename("APN-L*" = "APN-L", 
+                                              "MRN-L*" ="MRN-L", 
+                                              "RR-L*^" ="RR-L",  
+                                              "RN-L*" = "RN-L", 
+                                              "TRS-L*" ="TRS-L",
+                                              "CL-L*" ="CL-L",
+                                              "PF-L*" ="PF-L",
+                                              "VM-R*" = "VM-R") #*denotes regions with diff c-Fos expression, ^denotes diff c-Fos+GFP
+
 MEt_MBlue <- as.matrix(MEt_MBlue)
 
 MEt_MBlue_graph <- graph_from_adjacency_matrix(
@@ -3120,28 +4741,54 @@ MEt_MBlue_graph <- graph_from_adjacency_matrix(
   mode = "undirected",
   weighted = T,
   diag = T) 
-MEt_MBlue_graph$weight
 
 tmp_size <- rowSums(MEt_MBlue) 
 tmp_size <- tmp_size / max(tmp_size)
 
 as_tbl_graph(MEt_MBlue_graph) %>%
-   ggraph('igraph', algorithm = 'fr') +
+   ggraph('igraph', layout = layout.circle(MEt_MBlue_graph), circular = TRUE) +
    geom_edge_arc(lineend = "round",
-                 strength = .1,
-                 aes(edge_width = weight^2,
-                     edge_alpha = weight^2)) +
+                 aes(edge_width = weight,
+                     edge_alpha = weight)) +
   scale_edge_color_grey(start=0,
                         end=1)+
-  geom_node_point(size = ((tmp_size-min(tmp_size)/2)*8), 
-                  color = "midnightblue") +
+  geom_node_point(size = ((tmp_size-min(tmp_size)/2)*10), 
+                  fill = my_colors, shape = 21, color = my_colors, stroke = 1) +
   geom_node_text(aes(label = name), 
                   repel = T,
                   check_overlap = T,
                   size = 4,
                   colour="black") +
   labs(title = "Male Ethanol Midnight Blue Module") +
-  theme_graph(background = "white") 
+  theme_graph(background = "white") +
+  scale_edge_width(limits = c(0,1), 
+                   range = c(0.5, 6)) +
+  scale_edge_alpha(limits = c(0,1), 
+                   range = c(0.1,1))
+
+ggsave("MEt_graph_1NOV.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+```
+
+```{r}
+MEt_IMC <- intramodularConnectivity(adjMat = MEt_graph,
+                                  colors = net$colors) %>% as.data.frame() %>%
+  rownames_to_column(var = "region")
+MEt_IMC$module = labels2colors(net$colors)
+View(MEt_IMC)
+MEt_IMC <- MEt_IMC %>% mutate(Participation = (1-(MEt_IMC$kWithin/MEt_IMC$kTotal)))
+mean(MEt_IMC$Participation)
+
+MEt_tmp <- split(MEt_IMC, MEt_IMC$module)
+
+MEt_means <- lapply(MEt_tmp, function(df) {
+  mean(df$Participation)
+}) 
+
+MEt_means <- unlist(MEt_means)
+View(MEt_means)
 ```
 
 ### Female Ethanol
@@ -3155,13 +4802,22 @@ rownames(FEt_graph) <- Region_Info$acronym
 colnames(FEt_graph) <- Region_Info$acronym
 View(FEt_graph)
 
-all(Overall_IMC$region == Region_Info$name)
-Region_Info <- Region_Info %>% mutate(module = Overall_IMC$module)
-
-Info_MBlue <- Region_Info %>% filter(module =="midnightblue") %>% pull(acronym)
-Info_MBlue <- Info_MBlue %>% as.character()
 FEt_MBlue <- FEt_graph[Info_MBlue, Info_MBlue]
 View(FEt_MBlue)
+
+reorder_columns <- match(MBlue$acronym, colnames(FEt_MBlue))
+reorder_rows <- match(MBlue$acronym, rownames(FEt_MBlue))
+FEt_MBlue <- FEt_MBlue[reorder_rows, reorder_columns]
+
+FEt_MBlue <- as.data.frame(FEt_MBlue) %>% rename("APN-L*" = "APN-L", 
+                                              "MRN-L*" ="MRN-L", 
+                                              "RR-L*^" ="RR-L",  
+                                              "RN-L*" = "RN-L", 
+                                              "TRS-L*" ="TRS-L",
+                                              "CL-L*" ="CL-L",
+                                              "PF-L*" ="PF-L",
+                                              "VM-R*" = "VM-R") #*denotes regions with diff c-Fos expression, ^denotes diff c-Fos+GFP
+
 FEt_MBlue <- as.matrix(FEt_MBlue)
 
 FEt_MBlue_graph <- graph_from_adjacency_matrix(
@@ -3174,25 +4830,65 @@ tmp_size <- rowSums(FEt_MBlue)
 tmp_size <- tmp_size / max(tmp_size)
 
 as_tbl_graph(FEt_MBlue_graph) %>%
-   ggraph('igraph', algorithm = 'fr') +
+   ggraph('igraph', layout = layout.circle(FEt_MBlue_graph), circular = TRUE) +
    geom_edge_arc(lineend = "round",
-                 strength = .1,
-                 aes(edge_width = weight^2,
-                     edge_alpha = weight^2)) +
+                 aes(edge_width = weight,
+                     edge_alpha = weight)) +
   scale_edge_color_grey(start=0,
                         end=1)+
-  geom_node_point(size = ((tmp_size-min(tmp_size)/2)*8), 
-                  color = "midnightblue") +
+  geom_node_point(size = ((tmp_size-min(tmp_size)/2)*10), 
+                  fill = my_colors, shape = 21, color = my_colors, stroke = 1) +
   geom_node_text(aes(label = name), 
                   repel = T,
                   check_overlap = T,
                   size = 4,
                   colour="black") +
   labs(title = "Female Ethanol Midnight Blue Module") +
-  theme_graph(background = "white") 
+  theme_graph(background = "white") +
+  scale_edge_width(limits = c(0,1), 
+                   range = c(0.5, 6)) +
+  scale_edge_alpha(limits = c(0,1), 
+                   range = c(0.1,1))
+
+ggsave("FEt_graph_4NOV.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-## Supplemental Figure S10A Anatomical Category
+```{r}
+FEt_IMC <- intramodularConnectivity(adjMat = FEt_graph,
+                                  colors = net$colors) %>% as.data.frame() %>%
+  rownames_to_column(var = "region")
+FEt_IMC$module = labels2colors(net$colors)
+View(FEt_IMC)
+FEt_IMC <- FEt_IMC %>% mutate(Participation = (1-(FEt_IMC$kWithin/FEt_IMC$kTotal)))
+mean(FEt_IMC$Participation)
+
+FEt_tmp <- split(FEt_IMC, FEt_IMC$module)
+
+FEt_means <- lapply(FEt_tmp, function(df) {
+  mean(df$Participation)
+}) 
+
+FEt_means <- unlist(FEt_means)
+View(FEt_means)
+
+list_text_data = as.list(unique(FEt_IMC$module))
+
+list_text_data <- setNames(list_text_data, list_text_data)
+
+list_text_data <- list_text_data[order(names(list_text_data))]
+
+tmp_table <- data.frame(row.names = list_text_data, 
+                           FEt = FEt_means, 
+                           MEt = MEt_means,
+                        FWa = FWa_means, 
+                           MWa = MWa_means)
+View(tmp_table)
+```
+
+## Supplemental Figure S12A Anatomical Category
 ```{r}
 Mod_regions <- split(Overall_IMC$region, Overall_IMC$module) #Creates list of region names in each module 
 View(Mod_regions)
@@ -3218,9 +4914,14 @@ ggplot(plot_Anat_num, aes(x=Module, y=Proportion, fill=Category))+
   scale_fill_viridis(discrete = TRUE, option = "H", aesthetics = "fill") +
   labs(title = "WGCNA Overall Modules") +
   theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1))
+
+ggsave("WGCNA_mod_anatomy.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-## Supplemental Figure S10B Hemisphere 
+## Supplemental Figure S12B Hemisphere 
 ```{r}
 Hemi_Mod_num <- sapply(Mod_regions, 
                        function(module) { sapply(Regions_Hemi, 
@@ -3242,9 +4943,14 @@ ggplot(plot_Hemi, aes(x=Module, y=Proportion, fill=Hemisphere))+
   scale_x_discrete(labels=as.character(x), breaks=x) +
   labs(title = "WGCNA Overall Modules") +
   theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1))
+
+ggsave("WGCNA_mod_hemi.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-## Supplemental Figure S10C Intramodular Adjacency Values
+## Supplemental Figure S12C Intramodular Adjacency Values
 ```{r}
 rownames(adjacency) %in% Overall_IMC$region
 Overall_IMC <- Overall_IMC %>% arrange(module)
@@ -3301,9 +5007,14 @@ View(tmp4)
 
 base_plot +
   ggplot2::scale_color_manual(values = c("black","blue","brown","cyan","green", "greenyellow","grey", "lightcyan","magenta", "midnightblue","pink","purple","red","salmon","tan","turquoise","yellow"))
+
+ggsave("WGCNA_IMC.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
 ```
 
-## Supplemental Figure S10D, Supplemental Table S17 Type of Node and Hub, Supplemental Tables S16 Hubs 
+## Supplemental Figure S12D, Supplemental Table S17 Type of Node and Hub, Supplemental Tables S16 Hubs
 ```{r}
 Overall_IMC <- Overall_IMC %>% mutate(Participation = (1-(Overall_IMC$kWithin/Overall_IMC$kTotal))) 
 View(Overall_IMC)
@@ -3332,14 +5043,251 @@ table <- Overall_all %>%
         group_by(Type) %>%
         tally()
 
+svglite::svglite("WGCNA_node_types.svg",
+                width = 6,
+                height = 4)
+
 pie(table$n, labels = paste(table$Type, table$n, sep=" -"),
    main="WGCNA Node Types", 
    col = brewer.pal(n = 7, name = "Set2"))
-legend("topright", table$Type, cex = 1,  
-fill = c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494")) 
+# legend("bottomright", table$Type, cex = 1,  
+# fill = c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494")) 
+
+dev.off()
 ```
 
-## Supplemental Tables S16, Overrepresentation Analysis
+## Supplemental Figure S13, Black Network graphs
+Black module is associated with both metrics of ethanol intake, but not sex 
+### Male Water
+```{r}
+View(MWa_graph)
+
+Info_B <- Region_Info %>% filter(module =="black") %>% pull(acronym)
+Info_B <- Info_B %>% as.character()
+
+black <- Region_Info %>% filter(module =="black")
+black <- black %>% mutate(color = case_when(Allen_Group_Name == "Hindbrain" ~ "#2FF399",
+                                            Allen_Group_Name == "Midbrain" ~ "#E8D158"))
+
+black <- black %>% mutate(Allen_Group_Name = factor(Allen_Group_Name, levels = c("Hindbrain", "Midbrain"))) %>% 
+  arrange(Allen_Group_Name)
+View(black)
+
+black_colors <- c("#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#2FF399", "#E8D158","#E8D158")
+names(black_colors) <- c("PB-L", "B-L",   "DTN-L", "PCG-L", "SG-L",  "LC-L",  "LDT-L", "NI-L",  "SLC-L", "SLD-L", "PB-R",  "B-R",   "DTN-R", "PCG-R", "SG-R",  "LC-R",  "LDT-R", "NI-R", "SLC-R", "SLD-R", "MEV-L", "MEV-R") #Colors correspond to anatomical category
+
+MWa_B <- MWa_graph[Info_B, Info_B]
+View(MWa_B)
+
+reorder_columns <- match(black$acronym, colnames(MWa_B))
+reorder_rows <- match(black$acronym, rownames(MWa_B))
+MWa_B <- MWa_B[reorder_rows, reorder_columns]
+
+MWa_B <- as.data.frame(MWa_B) %>% rename("LC-R*" = "LC-R",
+                                                 "SLR-R*" = "SLC-R", 
+                                                 "SLD-R*" = "SLD-R") #*denotes regions with diff c-Fos expression
+MWa_B <- as.matrix(MWa_B)
+
+MWa_B_graph <- graph_from_adjacency_matrix(
+  MWa_B,
+  mode = "undirected",
+  weighted = T,
+  diag = T) #True since diagonal is already 0
+
+tmp_size <- rowSums(MWa_B) 
+tmp_size <- tmp_size / max(tmp_size)
+
+as_tbl_graph(MWa_B_graph) %>%
+   ggraph('igraph', layout = layout.circle(MWa_B_graph), circular = TRUE) +
+  geom_edge_arc(lineend = "round",
+                 aes(edge_width = weight,
+                     edge_alpha = weight)) +
+  scale_edge_color_grey(start=0,
+                        end=1)+
+   geom_node_text(aes(label = name), 
+                  repel = T,
+                 check_overlap = T,
+                  size = 4,
+                  colour="black" 
+                  ) +
+  geom_node_point(size = ((tmp_size-min(tmp_size)/2)*10), 
+                  fill = black_colors, shape = 21, color = black_colors, stroke = 1) +
+  labs(title = "Male Water Black Module") +
+  theme_graph(background = "white") +
+  scale_edge_width(limits = c(0,1), 
+                   range = c(0.5, 6)) +
+  scale_edge_alpha(limits = c(0,1), 
+                   range = c(0.1,1))
+
+ggsave("MWa_Black_graph.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+
+dev.off()
+```
+
+### Female Water
+```{r}
+View(FWa_graph)
+
+FWa_B <- FWa_graph[Info_B, Info_B]
+
+reorder_columns <- match(black$acronym, colnames(FWa_B))
+reorder_rows <- match(black$acronym, rownames(FWa_B))
+FWa_B <- FWa_B[reorder_rows, reorder_columns]
+
+FWa_B <- as.data.frame(FWa_B) %>% rename("LC-R*" = "LC-R",
+                                                 "SLR-R*" = "SLC-R", 
+                                                 "SLD-R*" = "SLD-R") #*denotes regions with diff c-Fos expression
+View(FWa_B)
+FWa_B <- as.matrix(FWa_B)
+
+FWa_B_graph <- graph_from_adjacency_matrix(
+  FWa_B,
+  mode = "undirected",
+  weighted = T,
+  diag = T) 
+
+tmp_size <- rowSums(FWa_B) 
+tmp_size <- tmp_size / max(tmp_size)
+
+as_tbl_graph(FWa_B_graph) %>%
+   ggraph('igraph', layout = layout.circle(FWa_B_graph), circular = TRUE) +
+   geom_edge_arc(lineend = "round",
+                 aes(edge_width = weight,
+                     edge_alpha = weight)) +
+  scale_edge_color_grey(start=0,
+                        end=1)+
+  geom_node_point(size = ((tmp_size-min(tmp_size)/2)*10), 
+                  fill = black_colors, shape = 21, color = black_colors, stroke = 1) +
+  geom_node_text(aes(label = name), 
+                  repel = T,
+                  check_overlap = T,
+                  size = 4,
+                  colour="black") +
+  labs(title = "Female Water Black Module") +
+  theme_graph(background = "white") +
+  scale_edge_width(limits = c(0,1), 
+                   range = c(0.5, 6)) +
+  scale_edge_alpha(limits = c(0,1), 
+                   range = c(0.1,1))
+
+ggsave("FWa_Black_graph.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+```
+
+### Male Ethanol
+```{r}
+View(MEt_graph)
+
+MEt_B <- MEt_graph[Info_B, Info_B]
+
+reorder_columns <- match(black$acronym, colnames(MEt_B))
+reorder_rows <- match(black$acronym, rownames(MEt_B))
+MEt_B <- MEt_B[reorder_rows, reorder_columns]
+
+MEt_B <- as.data.frame(MEt_B) %>% rename("LC-R*" = "LC-R",
+                                                 "SLR-R*" = "SLC-R", 
+                                                 "SLD-R*" = "SLD-R") #*denotes regions with diff c-Fos expression
+View(MEt_B)
+MEt_B <- as.matrix(MEt_B)
+
+MEt_B_graph <- graph_from_adjacency_matrix(
+  MEt_B,
+  mode = "undirected",
+  weighted = T,
+  diag = T) 
+
+tmp_size <- rowSums(MEt_B) 
+tmp_size <- tmp_size / max(tmp_size)
+
+as_tbl_graph(MEt_B_graph) %>%
+   ggraph('igraph', layout = layout.circle(MEt_B_graph), circular = TRUE) +
+   geom_edge_arc(lineend = "round",
+                 aes(edge_width = weight,
+                     edge_alpha = weight)) +
+  scale_edge_color_grey(start=0,
+                        end=1)+
+  geom_node_point(size = ((tmp_size-min(tmp_size)/2)*10), 
+                  fill = black_colors, shape = 21, color = black_colors, stroke = 1) +
+  geom_node_text(aes(label = name), 
+                  repel = T,
+                  check_overlap = T,
+                  size = 4,
+                  colour="black") +
+  labs(title = "Male Ethanol Black Module") +
+  theme_graph(background = "white") +
+  scale_edge_width(limits = c(0,1), 
+                   range = c(0.5, 6)) +
+  scale_edge_alpha(limits = c(0,1), 
+                   range = c(0.1,1))
+
+ggsave("MEt_Black_graph.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+
+dev.off()
+```
+
+### Female Ethanol
+```{r}
+View(FEt_graph)
+
+FEt_B <- FEt_graph[Info_B, Info_B]
+
+reorder_columns <- match(black$acronym, colnames(FEt_B))
+reorder_rows <- match(black$acronym, rownames(FEt_B))
+FEt_B <- FEt_B[reorder_rows, reorder_columns]
+
+FEt_B <- as.data.frame(FEt_B) %>% rename("LC-R*" = "LC-R",
+                                                 "SLR-R*" = "SLC-R", 
+                                                 "SLD-R*" = "SLD-R") #*denotes regions with diff c-Fos expression
+View(FEt_B)
+FEt_B <- as.matrix(FEt_B)
+
+FEt_B_graph <- graph_from_adjacency_matrix(
+  FEt_B,
+  mode = "undirected",
+  weighted = T,
+  diag = T) 
+
+tmp_size <- rowSums(FEt_B) 
+tmp_size <- tmp_size / max(tmp_size)
+
+as_tbl_graph(FEt_B_graph) %>%
+   ggraph('igraph', layout = layout.circle(FEt_B_graph), circular = TRUE) +
+   geom_edge_arc(lineend = "round",
+                 aes(edge_width = weight,
+                     edge_alpha = weight)) +
+  scale_edge_color_grey(start=0,
+                        end=1)+
+  geom_node_point(size = ((tmp_size-min(tmp_size)/2)*10), 
+                  fill = black_colors, shape = 21, color = black_colors, stroke = 1) +
+  geom_node_text(aes(label = name), 
+                  repel = T,
+                  check_overlap = T,
+                  size = 4,
+                  colour="black") +
+  labs(title = "Female Ethanol Black Module") +
+  theme_graph(background = "white") +
+  scale_edge_width(limits = c(0,1), 
+                   range = c(0.5, 6)) +
+  scale_edge_alpha(limits = c(0,1), 
+                   range = c(0.1,1))
+
+ggsave("FEt_black_graph.svg",
+       width = 6, 
+       height = 4, 
+       units = "in")
+
+dev.off()
+```
+
+## Supplemental Tables S17, Overrepresentation Analysis
 ```{r}
 # Anatomical Category 
 Anat_Mod_overrep <- sapply(Mod_regions, 
@@ -3371,10 +5319,75 @@ View(Mod_overlap)
 
 Mod_overlap_fdr <- as.data.frame(Mod_overlap) %>% mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
 View(Mod_overlap_fdr)
+
+#Number of regions with differential c-Fos expression in each modules
+cFos_Mod_num <- sapply(Mod_regions, 
+                       function(x) length(intersect(diff_cFos$region, x)) ) 
+View(cFos_Mod_num)
+
+# Differential c-Fos region Overrepresentation 
+Mod_overlap1 <- sapply(Mod_regions, function(x) fisher.test(Overall_IMC$region %in% x,
+                                          Overall_IMC$region %in% diff_cFos_GFP$region,  
+                                           alternative = "g")$p.value) 
+View(Mod_overlap1) 
+
+Mod_overlap1_fdr <- as.data.frame(Mod_overlap1) %>% mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
+View(Mod_overlap1_fdr) #red module has significant overlap with regions that have differential c-Fos+GFP coexpression
+
+#Number of regions with differential c-Fos+GFP co-expression in each modules
+cFosgfp_Mod_num <- sapply(Mod_regions, 
+                       function(x) length(intersect(diff_cFos_GFP$region, x)) ) 
+View(cFosgfp_Mod_num) #8 diff c-Fos+GFP regions in the red module
+```
+
+## Module overlap with functional networks
+```{r}
+View(Mod_regions)
+#Binge/Intoxication
+
+WGCNA_binge <- sapply(Mod_regions, 
+                       function(x) length(intersect(binge, x))) 
+View(WGCNA_binge) 
+
+WGCNA_binge_overlap <- sapply(Mod_regions, function(x) fisher.test(Overall_IMC$region %in% x,
+                                          Overall_IMC$region %in% binge,  
+                                           alternative = "g")$p.value) 
+View(WGCNA_binge_overlap) 
+
+WGCNA_binge_overlap_fdr <- as.data.frame(WGCNA_binge_overlap) %>% mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
+View(WGCNA_binge_overlap_fdr)
+
+#Withdrawal/Negative affect
+WGCNA_withdrawal <- sapply(Mod_regions, 
+                       function(x) length(intersect(withdrawal, x))) 
+View(WGCNA_withdrawal) 
+
+WGCNA_withdrawal_overlap <- sapply(Mod_regions, function(x) fisher.test(Overall_IMC$region %in% x,
+                                          Overall_IMC$region %in% withdrawal,  
+                                           alternative = "g")$p.value) 
+View(WGCNA_withdrawal_overlap) 
+
+WGCNA_withdrawal_overlap_fdr <- as.data.frame(WGCNA_withdrawal_overlap) %>%
+  mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
+View(WGCNA_withdrawal_overlap_fdr)
+
+#Preoccupation/Anticipation/Craving
+WGCNA_craving <- sapply(Mod_regions, 
+                       function(x) length(intersect(craving, x))) 
+View(WGCNA_craving) 
+
+WGCNA_craving_overlap <- sapply(Mod_regions, function(x) fisher.test(Overall_IMC$region %in% x,
+                                          Overall_IMC$region %in% craving,  
+                                           alternative = "g")$p.value) 
+View(WGCNA_craving_overlap) 
+
+WGCNA_craving_overlap_fdr <- as.data.frame(WGCNA_craving_overlap) %>%
+  mutate(across(where(is.numeric), function(x) p.adjust(x, method = "fdr")))
+View(WGCNA_craving_overlap_fdr)
 ```
 
 # Additional Code for Supplemental Tables and Results 
-## Supplemental Tables S6, 8, 10, 12, 16, Hubs that are also regions with differential c-Fos expression
+## Supplemental Tables S10-13, 17, Hubs that are also regions with differential c-Fos expression
 ```{r}
 MWa_cFos <- MWa_per_hubs %>% filter(region %in% diff_cFos$region)
 FWa_cFos <- FWa_per_hubs %>% filter(region %in% diff_cFos$region)
@@ -3383,7 +5396,7 @@ FEt_cFos <- FEt_per_hubs %>% filter(region %in% diff_cFos$region)
 WGCNA_cFos <- Overall_hubs %>% filter(region %in% diff_cFos$region)
 ```
 
-## Supplemental Tables S6, 8, 10, 12, 16, Hubs shared between WGCNA and correlation matrix networks
+## Supplemental Tables S10-13, 17, Hubs shared between WGCNA and correlation matrix networks
 ```{r}
 WGCNA_MWa <- Overall_hubs %>% filter(region %in% MWa_per_hubs$region)
 WGCNA_FWa <- Overall_hubs %>% filter(region %in% FWa_per_hubs$region)
@@ -3391,7 +5404,7 @@ WGCNA_MEt <- Overall_hubs %>% filter(region %in% MEt_per_hubs$region)
 WGCNA_FEt <- Overall_hubs %>% filter(region %in% FEt_per_hubs$region)
 ```
 
-## Supplemental Tables S10, 12, 16, Unique Hubs
+## Supplemental Tables S12-13, 16, Unique Hubs
 ```{r}
 # Male Ethanol
 MEt_unique_hubs <- MEt_per_hubs %>% filter(!(region %in% MWa_per_hubs$region))
@@ -3400,12 +5413,25 @@ MEt_unique_hubs <- MEt_unique_hubs  %>% filter(!(region %in% FEt_per_hubs$region
 MEt_unique_hubs <- MEt_unique_hubs  %>% filter(!(region %in% Overall_hubs$region))
 View(MEt_unique_hubs)
 
+MEt_unique_hubs %>%
+        group_by(Type) %>%
+        tally()
+
 # Female Ethanol
 FEt_unique_hubs <- FEt_per_hubs %>% filter(!(region %in% MWa_per_hubs$region))
 FEt_unique_hubs <- FEt_unique_hubs  %>% filter(!(region %in% FWa_per_hubs$region))
 FEt_unique_hubs <- FEt_unique_hubs  %>% filter(!(region %in% MEt_per_hubs$region))
 FEt_unique_hubs <- FEt_unique_hubs  %>% filter(!(region %in% Overall_hubs$region))
 View(FEt_unique_hubs)
+
+FEt_unique_hubs %>%
+        group_by(Type) %>%
+        tally()
+
+EtOH_unique_hubs <- data.frame(row.names = c("Connector", "Kinless", "Provincial"),
+                            FEt = c(11,11,18), 
+                            MEt = c(19,7,1))
+chisq.test(EtOH_unique_hubs)
 
 # WGCNA
 WGCNA_unique_hubs <- Overall_hubs %>% filter(!(region %in% MWa_per_hubs$region))
@@ -3422,7 +5448,7 @@ DW_M_cFos <- DW_M_EtOH_H2O %>% filter(name %in% diff_cFos$region)
 DW_F_cFos <- DW_F_EtOH_H2O %>% filter(name %in% diff_cFos$region)
 ```
 
-### Node and hubs types differ between sex and fluid groups, and diffferent than WGCNA network
+### Node and hubs types differ between sex and fluid groups
 ```{r}
 # Male
 MWa_table <- MWa_table %>% add_row(Type = "Connector", n = 0)%>%
@@ -3445,6 +5471,14 @@ MEt_FEt_nodes <- data.frame(row.names = MEt_table$Type,
                             Male = MEt_table$n,
                             Female = FEt_table$n)
 chisq.test(MEt_FEt_nodes) 
+
+#Water
+MWa_FWa_nodes <- data.frame(row.names = MWa_table$Type,
+                            Male = MWa_table$n,
+                            Female = FWa_table$n)
+chisq.test(MWa_FWa_nodes)
+
+p.adjust(c(2.2e-16, 1.445e-06, 3.374e-12, 2.2e-16), method = "fdr") 
 ```
 
 ### Anti-correlation quantification
@@ -3518,4 +5552,6 @@ FWa_WGCNA_nodes <- data.frame(row.names = FWa_table$Type,
                             FWa = FWa_table$n, 
                             WGCNA = table$n)
 chisq.test(FWa_WGCNA_nodes)
+
+p.adjust(c(2.415e-06, 2.364e-12, 2.2e-16, 2.2e-16), method = "fdr") 
 ```
