@@ -1,14 +1,18 @@
-GitHub assocaited with the below manuscript (to be submitted)
+GitHub assocaited with the below manuscript:
 
-Title: Sex differences in nucleus accumbens core circuitry engaged by binge-like ethanol drinking
+DOI: https://doi.org/10.1007/s00213-025-06875-y
 
-Authors: Amy E. Chan1,2, Justin Q. Anderson1,2, Kolter B. Grigsby1,2, Bryan E. Jensen2, Andrey E. Ryabinin1, Angela R. Ozburn1,2
+Title: Sex differences in nucleus accumbens circuitry engaged with binge-like ethanol drinking
+
+Authors: Amy E. Chan1,2, Justin Q. Anderson1,2, Kolter B. Grigsby3, Bryan E. Jensen2, Andrey E. Ryabinin1, Angela R. Ozburn1,2
 
 Affiliations: 
 1. Oregon Health and Science University, Dept. of Behavioral Neuroscience, Portland Alcohol Research Center, Portland, OR, 97239, USA.
 2. Veterans Affairs Portland Health Care System, Research and Development Service, Portland, OR, 97239, USA.
+3. Washington State University, Dept. of Pharmaceutical Sciences, Spokane, WA, 99202, USA.
 
-R code necessary to recreate analysis, figures and supplemental tables present in the manuscript is provided.
+
+R code necessary to recreate analysis, raw data, figures, and supplemental tables present in the manuscript is provided.
 
 Description of contents:
 
@@ -22,20 +26,20 @@ Summary:
 The raw output of SmartAnalytics contains cell density (cells/mm3) data for 1678 Allen Brain Atlas defined regions per mouse, including layer specific information from the cortex, white matter, ventricles, hindbrain structures and separate values for left and right hemispheres. This data was reduced to 426 areas per mouse (213 per hemisphere), eliminating values for white matter and ventricles, and reducing subregion and layer specific information (ex. infralimbic cortex layer I, II/III, V, VIa, and VIb were collapsed into 1 value for this region). Raw c-Fos density data was found to have a right-skewed distribution, so a square-root transformation was applied to all data to better approximate a normal distribution. 
 
 Analysis performed by:
-  Amy Chan - chanamy@ohsu.edu
+  Amy Chan - amyechan96@gmail.com
   Justin Anderson - andejust@ohsu.edu
 
 Writing performed by:
-  Amy Chan - chanamy@ohsu.edu
+  Amy Chan - amyechan96@gmail.com
   Angela Ozburn - ozburn@ohsu.edu
   
 Experimental design and conceptualization performed by:
-  Amy Chan - chanamy@ohsu.edu
+  Amy Chan - amyechan96@gmail.com
   Angela Ozburn - ozburn@ohsu.edu
   
 Tissue extraction by:
-  Amy Chan - chanamy@ohsu.edu
-  Kolter Grigsby - grigsbyk@ohsu.edu
+  Amy Chan - amyechan96@gmail.com
+  Kolter Grigsby - kolter.grigsby@wsu.edu
 
 Files included here are organized as follows:
 
@@ -43,6 +47,6 @@ Files included here are organized as follows:
 			  
 Corresponding authors:
 
-Amy Chan - chanamy@ohsu.edu
+Amy Chan - amyechan96@gmail.com
 Angela Ozburn - ozburn@ohsu.edu
 
